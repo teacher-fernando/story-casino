@@ -3,532 +3,488 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Story Casino</title>
+    <title>Story Casino - High Performance 60FPS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@500;700;800&display=swap" rel="stylesheet">
     
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
+            overflow: hidden;
             font-family: 'Inter', sans-serif;
             background: radial-gradient(circle at 50% 35%, #3b0764 0%, #1e1b4b 55%, #090514 100%);
             color: #ffffff;
             user-select: none;
+            height: 100vh;
+            width: 100vw;
         }
         .font-casino {
             font-family: 'Fredoka', sans-serif;
         }
         #canvas-container {
-            width: 100%;
-            height: 62vh;
-            min-height: 440px;
+            width: 100vw;
+            height: 100vh;
             position: relative;
             cursor: grab;
         }
         #canvas-container:active {
             cursor: grabbing;
         }
+        #canvas-container canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
         .casino-btn {
             background: linear-gradient(180deg, #fde047 0%, #eab308 50%, #ca8a04 100%);
-            box-shadow: 0 6px 0 #854d0e, 0 12px 20px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.8);
-            transition: all 0.12s ease;
+            box-shadow: 0 6px 0 #854d0e, 0 12px 24px rgba(0,0,0,0.65), inset 0 2px 3px rgba(255,255,255,0.85);
+            transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease;
+            will-change: transform;
         }
         .casino-btn:hover {
-            filter: brightness(1.08);
+            filter: brightness(1.07);
             transform: translateY(-2px);
-            box-shadow: 0 8px 0 #854d0e, 0 15px 25px rgba(234, 179, 8, 0.5), inset 0 2px 3px rgba(255,255,255,0.9);
+            box-shadow: 0 8px 0 #854d0e, 0 16px 28px rgba(234, 179, 8, 0.45), inset 0 2px 3px rgba(255,255,255,0.9);
         }
         .casino-btn:active, .casino-btn.spinning {
-            transform: translateY(5px);
-            box-shadow: 0 1px 0 #854d0e, 0 4px 10px rgba(0,0,0,0.5);
+            transform: translateY(4px) !important;
+            box-shadow: 0 2px 0 #854d0e, 0 4px 10px rgba(0,0,0,0.5);
         }
-        .glass-panel {
-            background: rgba(17, 24, 39, 0.82);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(250, 204, 21, 0.28);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        .hud-pill {
+            background: rgba(15, 23, 42, 0.78);
+            border: 1px solid rgba(250, 204, 21, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
         }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #eab308; border-radius: 4px; }
-
-        /* Minimal classroom presentation: title + playable slot machine only */
-        header,
-        #b1-mission-box,
-        #connector-chips,
-        #story-textarea,
-        #word-counter,
-        #copy-toast,
-        #word-bank-modal,
-        #mode-image, #mode-text, #mode-both,
-        button[onclick="toggleWordBankModal()"],
-        #sound-btn,
-        #timer-btn,
-        #timer-display,
-        #lock-0, #lock-1, #lock-2,
-        button[onclick="newB1Challenge()"],
-        #canvas-container > div.absolute.top-3.left-3,
-        #canvas-container > div.absolute.top-3.right-3,
-        main > div.w-full.max-w-4xl > div.w-full.glass-panel.rounded-2xl {
-            display: none !important;
-        }
-        main > div.w-full.max-w-4xl > div.w-full.glass-panel.p-3 {
-            position: fixed !important;
-            display: flex !important;
-            width: auto !important;
-            max-width: 95vw !important;
-            left: 50% !important;
-            bottom: 14px !important;
-            transform: translateX(-50%) !important;
-            justify-content: center !important;
-            background: transparent !important;
-            border: 0 !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            z-index: 100 !important;
-        }
-        main > div.w-full.max-w-4xl > div.w-full.glass-panel.p-3 > div:first-child,
-        main > div.w-full.max-w-4xl > div.w-full.glass-panel.p-3 > div:last-child {
-            display: none !important;
-        }
-        main > div.w-full.max-w-4xl > div.w-full.glass-panel.p-3 > div:nth-child(2) {
-            display: flex !important;
-            margin: 0 !important;
-        }
-        body { min-height: 100vh; overflow: hidden; justify-content: flex-start !important; }
-        main { max-width: 100% !important; width: 100% !important; padding: 0 !important; }
-        #canvas-container {
-            height: 100vh !important;
-            min-height: 0 !important;
-            width: 100vw !important;
-            margin: 0 !important;
-        }
-        #canvas-container canvas { display:block; }
-        /* The one remaining control is a large, obvious spin button. */
-        #spin-btn {
-            position: relative !important;
-            left: auto !important;
-            bottom: auto !important;
-            transform: none !important;
-            font-size: 24px !important;
-            padding: 14px 34px !important;
-            white-space: nowrap;
-        }
-        #spin-btn.spinning { transform: translateY(4px) !important; }
-        /* Keep the existing game button accessible, but remove the surrounding dashboard. */
-        main > div.w-full.max-w-4xl { display: contents !important; }
-
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
+<body>
 
-    <header class="w-full px-4 py-3 glass-panel sticky top-0 z-30 border-b border-yellow-500/30">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-red-600 to-yellow-500 flex items-center justify-center shadow-lg border-2 border-yellow-300 text-2xl">
-                    🎰
-                </div>
-                <div>
-                    <h1 class="font-casino text-xl sm:text-2xl tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-400 drop-shadow">
-                        BIG STORY WIN <span class="text-xs font-sans font-bold uppercase px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-400/40 ml-1">ESL A2 Level</span>
-                    </h1>
-                    <p class="text-xs text-slate-300 hidden sm:block">3D 3-Reel Slot Machine • 150 A2 Prompts (30 per category)</p>
-                </div>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <div class="bg-slate-900/90 p-1 rounded-xl border border-slate-700 flex items-center">
-                    <button id="mode-image" onclick="setDisplayMode('image')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-yellow-500 text-slate-950 shadow">
-                        🖼️ Image Mode
-                    </button>
-                    <button id="mode-text" onclick="setDisplayMode('text')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white">
-                        🔤 Text Mode
-                    </button>
-                    <button id="mode-both" onclick="setDisplayMode('both')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white">
-                        ✨ Both
-                    </button>
-                </div>
-
-                <button onclick="toggleWordBankModal()" class="px-3 py-2 rounded-xl bg-indigo-950/90 hover:bg-indigo-900 text-indigo-200 border border-indigo-500/40 text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition">
-                    <span>📚</span> <span class="hidden md:inline">150 Word Bank</span>
-                </button>
-
-                <button id="sound-btn" onclick="toggleMute()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-lg transition" title="Toggle Casino Sound Effects">
-                    🔊
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-grow flex flex-col items-center w-full max-w-7xl mx-auto px-3 sm:px-6 relative">
-        
-        <div id="canvas-container" class="w-full relative flex items-center justify-center">
-            <div class="absolute top-3 left-3 z-10 pointer-events-none bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-xs text-slate-300 flex items-center gap-2">
-                <span>🖱️ Drag to rotate 3D angle • Click Lever or SPIN</span>
-                <button onclick="resetCameraAngle()" class="pointer-events-auto text-yellow-400 hover:underline font-semibold ml-1">Reset View</button>
-            </div>
-
-            <div class="absolute top-3 right-3 z-10 glass-panel px-3.5 py-2 rounded-2xl flex items-center gap-2.5">
-                <div class="text-xs text-slate-300 font-semibold uppercase tracking-wider hidden sm:block">Speaking Timer:</div>
-                <span id="timer-display" class="font-mono text-lg font-extrabold text-yellow-400">01:00</span>
-                <button id="timer-btn" onclick="toggleTimer()" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
-                    ▶ Start
-                </button>
-                <button onclick="resetTimer()" class="px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold transition">
-                    ↺
-                </button>
-            </div>
+    <!-- Container 3D Principal -->
+    <div id="canvas-container">
+        <!-- Barra Superior Leve (Sem backdrop-filter pesado para não travar a GPU) -->
+        <div class="fixed top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 sm:gap-3 px-4 py-2 rounded-full hud-pill pointer-events-auto">
+            <span class="text-xs sm:text-sm font-bold text-yellow-300 tracking-wide flex items-center gap-1.5">
+                <span>🎰</span> <span class="hidden sm:inline">STORY CASINO</span>
+            </span>
+            <div class="h-4 w-[1px] bg-slate-700"></div>
+            <button onclick="resetCameraAngle()" class="text-xs font-semibold text-slate-300 hover:text-yellow-300 transition px-2 py-0.5 rounded hover:bg-slate-800" title="Centralizar câmera 3D">
+                🎥 Reset View
+            </button>
+            <button id="music-btn" onclick="toggleMusic()" class="text-xs font-semibold text-yellow-300 hover:text-yellow-200 transition px-2 py-0.5 rounded bg-slate-800/90 border border-yellow-500/30 flex items-center gap-1" title="Ligar/Desligar Música de Fundo">
+                <span>🎵</span> <span id="music-label" class="hidden sm:inline">Music ON</span>
+            </button>
+            <button id="sound-btn" onclick="toggleMute()" class="text-sm hover:scale-110 transition px-1.5" title="Ativar/Desativar Som">
+                🔊
+            </button>
         </div>
 
-        <div class="w-full max-w-4xl -mt-4 z-20 flex flex-col items-center gap-4 pb-8">
-            
-            <div class="w-full glass-panel p-3 sm:p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-xs font-bold uppercase tracking-wider text-yellow-400/90 mr-1">Hold Reels:</span>
-                    <button id="lock-0" onclick="toggleLockReel(0)" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold flex items-center gap-1.5 transition">
-                        <span id="lock-icon-0">🔓</span> Reel 1
-                    </button>
-                    <button id="lock-1" onclick="toggleLockReel(1)" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold flex items-center gap-1.5 transition">
-                        <span id="lock-icon-1">🔓</span> Reel 2
-                    </button>
-                    <button id="lock-2" onclick="toggleLockReel(2)" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold flex items-center gap-1.5 transition">
-                        <span id="lock-icon-2">🔓</span> Reel 3
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-3 mx-auto sm:mx-0">
-                    <button id="spin-btn" onclick="triggerSpin()" class="casino-btn font-casino text-slate-950 text-xl sm:text-2xl px-8 py-3 rounded-2xl tracking-wider uppercase flex items-center gap-2.5">
-                        <span>🎲</span> <span id="spin-btn-text">SPIN REELS!</span>
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <button onclick="newB1Challenge()" class="px-3.5 py-2 rounded-xl bg-purple-900/80 hover:bg-purple-800 border border-purple-400/40 text-xs sm:text-sm font-semibold text-purple-100 transition flex items-center gap-1.5">
-                        <span>🎯</span> New A2 Challenge
-                    </button>
-                </div>
-            </div>
-
-            <div class="w-full glass-panel rounded-2xl p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
-                
-                <div class="lg:col-span-5 flex flex-col justify-between space-y-3">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold uppercase tracking-wider text-yellow-400">🎯 🎯 Active A2 Speaking Mission</span>
-                            <span class="text-[11px] text-slate-400">Elementary / Pre-intermediate ESL</span>
-                        </div>
-                        <div id="b1-mission-box" class="mt-1.5 p-3 rounded-xl bg-indigo-950/70 border border-indigo-400/30 text-sm text-indigo-100 font-medium">
-                            Use the <strong>Past Continuous</strong> ("While they were...") and at least one <strong>feeling adjective</strong> to connect the 3 3D elements!
-                        </div>
-                    </div>
-
-                    <div>
-                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300 block mb-1.5">
-                            💡 Click to add story connectors:
-                        </span>
-                        <div class="flex flex-wrap gap-1.5" id="connector-chips">
-                            <button onclick="insertConnector('Unexpectedly, ')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-yellow-500 hover:text-slate-950 text-xs font-semibold border border-slate-700 transition">Unexpectedly,</button>
-                            <button onclick="insertConnector('While this was happening, ')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-yellow-500 hover:text-slate-950 text-xs font-semibold border border-slate-700 transition">While this was happening,</button>
-                            <button onclick="insertConnector('As a result, ')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-yellow-500 hover:text-slate-950 text-xs font-semibold border border-slate-700 transition">As a result,</button>
-                            <button onclick="insertConnector('Even though ')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-yellow-500 hover:text-slate-950 text-xs font-semibold border border-slate-700 transition">Even though</button>
-                            <button onclick="insertConnector('Fortunately, ')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-yellow-500 hover:text-slate-950 text-xs font-semibold border border-slate-700 transition">Fortunately,</button>
-                            <button onclick="insertConnector('By the time ')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-yellow-500 hover:text-slate-950 text-xs font-semibold border border-slate-700 transition">By the time</button>
-                            <button onclick="insertConnector('To everyone\'s surprise, ')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-yellow-500 hover:text-slate-950 text-xs font-semibold border border-slate-700 transition">To everyone's surprise,</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-7 flex flex-col">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label for="story-textarea" class="text-xs font-bold uppercase tracking-wider text-yellow-400">
-                            ✍️ Student Story Builder (Speaking Notes or Writing Task)
-                        </label>
-                        <div class="flex items-center gap-2">
-                            <span id="word-counter" class="text-xs text-slate-400">0 words</span>
-                            <button onclick="copyStory()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 border border-slate-600 transition">
-                                📋 Copy
-                            </button>
-                            <button onclick="clearStory()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-red-900/60 text-xs text-slate-300 border border-slate-600 transition">
-                                🗑️ Clear
-                            </button>
-                        </div>
-                    </div>
-                    <textarea id="story-textarea" rows="3" oninput="updateWordCount()" placeholder="Spin the 3D slot machine and type or outline the story here using the 3 random prompts on the reels..." class="w-full rounded-xl bg-slate-900/90 border border-slate-700 focus:border-yellow-400 focus:outline-none p-3 text-sm text-white placeholder-slate-500 resize-none"></textarea>
-                    <div id="copy-toast" class="text-xs text-emerald-400 font-semibold mt-1 hidden">✔ Story copied to clipboard!</div>
-                </div>
-
-            </div>
+        <!-- Cartões de Resultado Apenas com Emojis (Sem texto, para livre interpretação!) -->
+        <div id="prompt-hud" class="fixed top-16 left-1/2 -translate-x-1/2 z-20 flex justify-center gap-3 sm:gap-5 pointer-events-auto transition-opacity duration-300">
+            <button onclick="toggleLockReel(0)" id="card-0" class="hud-pill px-5 py-2.5 rounded-2xl flex flex-col items-center gap-1 border-b-4 border-b-red-500 hover:scale-105 transition relative group" title="Clique para Travar/Destravar Rolo 1">
+                <span id="card-lock-badge-0" class="hidden absolute -top-2 -right-2 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow">🔒 HOLD</span>
+                <span id="card-emoji-0" class="text-3xl sm:text-4xl">🐙</span>
+            </button>
+            <button onclick="toggleLockReel(1)" id="card-1" class="hud-pill px-5 py-2.5 rounded-2xl flex flex-col items-center gap-1 border-b-4 border-b-blue-500 hover:scale-105 transition relative group" title="Clique para Travar/Destravar Rolo 2">
+                <span id="card-lock-badge-1" class="hidden absolute -top-2 -right-2 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow">🔒 HOLD</span>
+                <span id="card-emoji-1" class="text-3xl sm:text-4xl">🏰</span>
+            </button>
+            <button onclick="toggleLockReel(2)" id="card-2" class="hud-pill px-5 py-2.5 rounded-2xl flex flex-col items-center gap-1 border-b-4 border-b-emerald-500 hover:scale-105 transition relative group" title="Clique para Travar/Destravar Rolo 3">
+                <span id="card-lock-badge-2" class="hidden absolute -top-2 -right-2 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow">🔒 HOLD</span>
+                <span id="card-emoji-2" class="text-3xl sm:text-4xl">🗝️</span>
+            </button>
         </div>
-    </main>
 
-    <div id="word-bank-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
-        <div class="glass-panel max-w-5xl w-full max-h-[85vh] rounded-3xl flex flex-col overflow-hidden border-2 border-yellow-500/40">
-            <div class="p-4 sm:p-5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-                <div>
-                    <h2 class="font-casino text-2xl text-yellow-400">📚 Complete ESL A2 Word Bank (150 Items)</h2>
-                    <p class="text-xs text-slate-400">30 curated words per category: Animals, Places, Objects, Foods, and Actions</p>
-                </div>
-                <button onclick="toggleWordBankModal()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-red-600 text-white font-bold text-lg">✕</button>
+        <!-- Controles Principais Inferiores -->
+        <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2.5 w-auto max-w-[95vw] pointer-events-auto">
+            <!-- Botões rápidos para travar rolos individuais -->
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full hud-pill">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-yellow-400/90 mr-1 hidden sm:inline">Hold:</span>
+                <button id="lock-0" onclick="toggleLockReel(0)" class="px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold flex items-center gap-1.5 transition">
+                    <span id="lock-icon-0">🔓</span> Reel 1
+                </button>
+                <button id="lock-1" onclick="toggleLockReel(1)" class="px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold flex items-center gap-1.5 transition">
+                    <span id="lock-icon-1">🔓</span> Reel 2
+                </button>
+                <button id="lock-2" onclick="toggleLockReel(2)" class="px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold flex items-center gap-1.5 transition">
+                    <span id="lock-icon-2">🔓</span> Reel 3
+                </button>
             </div>
-            <div id="word-bank-content" class="p-5 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            </div>
+
+            <!-- Botão Gigante de Girar -->
+            <button id="spin-btn" onclick="triggerSpin()" class="casino-btn font-casino text-slate-950 text-xl sm:text-2xl px-9 py-3.5 rounded-2xl tracking-wider uppercase flex items-center gap-2.5 whitespace-nowrap">
+                <span>🎲</span> <span id="spin-btn-text">SPIN REELS!</span>
+            </button>
         </div>
     </div>
 
     <script>
+        // ============================================================================
+        // BANCO DE DADOS DE PALAVRAS (150 Prompts A2)
+        // ============================================================================
         const WORD_BANK = {
             Animals: {
-                label: "Animal / Creature",
+                label: "Animal",
                 color: "#ef4444",
-                badgeBg: "bg-red-500/20 text-red-300 border-red-500/30",
                 items: [
-                    { word: "Clever Octopus", emoji: "🐙", hint: "Can open jars underwater" },
-                    { word: "Sleepy Sloth", emoji: "🦥", hint: "Moves extremely slowly" },
-                    { word: "Curious Raccoon", emoji: "🦝", hint: "Loves shiny objects at night" },
-                    { word: "Talkative Parrot", emoji: "🦜", hint: "Repeats secret conversations" },
-                    { word: "Stubborn Camel", emoji: "🐪", hint: "Refuses to walk in the desert" },
-                    { word: "Friendly Dolphin", emoji: "🐬", hint: "Rescues lost swimmers" },
-                    { word: "Sneaky Fox", emoji: "🦊", hint: "Very clever and quiet" },
-                    { word: "Clumsy Penguin", emoji: "🐧", hint: "Always slipping on the ice" },
-                    { word: "Fierce Tiger", emoji: "🐅", hint: "Protecting its jungle territory" },
-                    { word: "Giant Panda", emoji: "🐼", hint: "Eating bamboo all afternoon" },
-                    { word: "Brave Eagle", emoji: "🦅", hint: "Flying high above the clouds" },
-                    { word: "Tiny Hedgehog", emoji: "🦔", hint: "Curls into a spiky ball" },
-                    { word: "Graceful Swan", emoji: "🦢", hint: "Swimming on a royal lake" },
-                    { word: "Mischievous Monkey", emoji: "🐒", hint: "Stealing tourists' sunglasses" },
-                    { word: "Loyal Golden Retriever", emoji: "🐕", hint: "Searching for a missing clue" },
-                    { word: "Mysterious Owl", emoji: "🦉", hint: "Delivering a message at midnight" },
-                    { word: "Fast Cheetah", emoji: "🐆", hint: "Running faster than a sports car" },
-                    { word: "Grumpy Flamingo", emoji: "🦩", hint: "Standing on one leg all day" },
-                    { word: "Jumping Kangaroo", emoji: "🦘", hint: "Hiding something in its pouch" },
-                    { word: "Slow Tortoise", emoji: "🐢", hint: "Over a hundred years old" },
-                    { word: "Hungry Shark", emoji: "🦈", hint: "Circling near a wooden boat" },
-                    { word: "Colorful Peacock", emoji: "🦚", hint: "Showing off its feathers" },
-                    { word: "Hardworking Beaver", emoji: "🦫", hint: "Building a huge wooden dam" },
-                    { word: "Wild Wolf", emoji: "🐺", hint: "Howling at the full moon" },
-                    { word: "Playful Otter", emoji: "🦦", hint: "Floating on its back in the river" },
-                    { word: "Dizzy Koala", emoji: "🐨", hint: "Napping high in a eucalyptus tree" },
-                    { word: "Dramatic Llama", emoji: "🦙", hint: "Wearing a colorful wool scarf" },
-                    { word: "Glowing Jellyfish", emoji: "🪼", hint: "Lighting up the deep ocean" },
-                    { word: "Tiny Chameleon", emoji: "🦎", hint: "Changing colors to hide" },
-                    { word: "Singing Whale", emoji: "🐋", hint: "Communicating across the ocean" }
+                    { word: "Clever Octopus", emoji: "🐙" },
+                    { word: "Sleepy Sloth", emoji: "🦥" },
+                    { word: "Curious Raccoon", emoji: "🦝" },
+                    { word: "Talkative Parrot", emoji: "🦜" },
+                    { word: "Stubborn Camel", emoji: "🐪" },
+                    { word: "Friendly Dolphin", emoji: "🐬" },
+                    { word: "Sneaky Fox", emoji: "🦊" },
+                    { word: "Clumsy Penguin", emoji: "🐧" },
+                    { word: "Fierce Tiger", emoji: "🐅" },
+                    { word: "Giant Panda", emoji: "🐼" },
+                    { word: "Brave Eagle", emoji: "🦅" },
+                    { word: "Tiny Hedgehog", emoji: "🦔" },
+                    { word: "Graceful Swan", emoji: "🦢" },
+                    { word: "Mischievous Monkey", emoji: "🐒" },
+                    { word: "Golden Retriever", emoji: "🐕" },
+                    { word: "Mysterious Owl", emoji: "🦉" },
+                    { word: "Fast Cheetah", emoji: "🐆" },
+                    { word: "Grumpy Flamingo", emoji: "🦩" },
+                    { word: "Jumping Kangaroo", emoji: "🦘" },
+                    { word: "Slow Tortoise", emoji: "🐢" },
+                    { word: "Hungry Shark", emoji: "🦈" },
+                    { word: "Colorful Peacock", emoji: "🦚" },
+                    { word: "Busy Beaver", emoji: "🦫" },
+                    { word: "Wild Wolf", emoji: "🐺" },
+                    { word: "Playful Otter", emoji: "🦦" },
+                    { word: "Dizzy Koala", emoji: "🐨" },
+                    { word: "Dramatic Llama", emoji: "🦙" },
+                    { word: "Glowing Jellyfish", emoji: "🪼" },
+                    { word: "Tiny Chameleon", emoji: "🦎" },
+                    { word: "Singing Whale", emoji: "🐋" }
                 ]
             },
             Places: {
-                label: "Place / Setting",
+                label: "Place",
                 color: "#3b82f6",
-                badgeBg: "bg-blue-500/20 text-blue-300 border-blue-500/30",
                 items: [
-                    { word: "Abandoned Castle", emoji: "🏰", hint: "Full of secret underground passages" },
-                    { word: "Crowded Train Station", emoji: "🚉", hint: "Everyone is rushing for the last train" },
-                    { word: "Tropical Island", emoji: "🏝️", hint: "Surrounded by crystal clear water" },
-                    { word: "Snowy Mountain Peak", emoji: "🏔️", hint: "Freezing wind and breathtaking views" },
-                    { word: "Underground Cave", emoji: "🕳️", hint: "Dark, echoing, and mysterious" },
-                    { word: "Luxury Cruise Ship", emoji: "🛳️", hint: "Sailing in the middle of the ocean" },
-                    { word: "Haunted Lighthouse", emoji: "🗼", hint: "Guiding ships during a storm" },
-                    { word: "Busy Street Market", emoji: "🎪", hint: "Full of exotic spices and noise" },
-                    { word: "Ancient Pyramid", emoji: "🏜️", hint: "Hidden deep in the hot desert" },
-                    { word: "Rooftop Garden", emoji: "🏙️", hint: "High above a modern city" },
-                    { word: "Secret Laboratory", emoji: "🧪", hint: "Where strange inventions are made" },
-                    { word: "Cozy Treehouse", emoji: "🏡", hint: "Hidden high up in a forest" },
-                    { word: "Space Station", emoji: "🛸", hint: "Orbiting hundreds of miles above Earth" },
-                    { word: "Botanical Greenhouse", emoji: "🌿", hint: "Filled with rare carnivorous plants" },
-                    { word: "Vintage Bookshop", emoji: "📚", hint: "Smells like old paper and magic" },
-                    { word: "Amusement Park", emoji: "🎢", hint: "Bright neon lights and roller coasters" },
-                    { word: "Submarine Cabin", emoji: "⚓", hint: "Exploring the bottom of the sea" },
-                    { word: "History Museum", emoji: "🏛️", hint: "After all the visitors go home" },
-                    { word: "Camping Tent", emoji: "⛺", hint: "In the middle of a rainy forest" },
-                    { word: "Airport Boarding Gate", emoji: "🛫", hint: "Five minutes before takeoff" },
-                    { word: "Old Windmill", emoji: "🌾", hint: "Spinning in the countryside breeze" },
-                    { word: "Ice Hotel", emoji: "🧊", hint: "Everything inside is carved from ice" },
-                    { word: "Movie Theater", emoji: "🎬", hint: "During a sudden power outage" },
-                    { word: "Coral Reef", emoji: "🪸", hint: "Full of colorful marine life" },
-                    { word: "Medieval Village", emoji: "🛡️", hint: "With cobblestone streets" },
-                    { word: "Recording Studio", emoji: "🎙️", hint: "Soundproof walls and microphones" },
-                    { word: "Suspension Bridge", emoji: "🌉", hint: "Swinging high over a canyon" },
-                    { word: "Volcano Crater", emoji: "🌋", hint: "Smoke rising from the ground" },
-                    { word: "Detective's Office", emoji: "🕵️", hint: "Rain tapping against the window" },
-                    { word: "Royal Palace Ballroom", emoji: "👑", hint: "With giant crystal chandeliers" }
+                    { word: "Abandoned Castle", emoji: "🏰" },
+                    { word: "Train Station", emoji: "🚉" },
+                    { word: "Tropical Island", emoji: "🏝️" },
+                    { word: "Snowy Mountain", emoji: "🏔️" },
+                    { word: "Deep Cave", emoji: "🕳️" },
+                    { word: "Cruise Ship", emoji: "🛳️" },
+                    { word: "Old Lighthouse", emoji: "🗼" },
+                    { word: "Street Market", emoji: "🎪" },
+                    { word: "Ancient Pyramid", emoji: "🏜️" },
+                    { word: "Rooftop Garden", emoji: "🏙️" },
+                    { word: "Secret Lab", emoji: "🧪" },
+                    { word: "Cozy Treehouse", emoji: "🏡" },
+                    { word: "Space Station", emoji: "🛸" },
+                    { word: "Greenhouse", emoji: "🌿" },
+                    { word: "Vintage Bookshop", emoji: "📚" },
+                    { word: "Theme Park", emoji: "🎢" },
+                    { word: "Submarine", emoji: "⚓" },
+                    { word: "History Museum", emoji: "🏛️" },
+                    { word: "Camping Tent", emoji: "⛺" },
+                    { word: "Airport Gate", emoji: "🛫" },
+                    { word: "Old Windmill", emoji: "🌾" },
+                    { word: "Ice Hotel", emoji: "🧊" },
+                    { word: "Movie Theater", emoji: "🎬" },
+                    { word: "Coral Reef", emoji: "🪸" },
+                    { word: "Medieval Village", emoji: "🛡️" },
+                    { word: "Music Studio", emoji: "🎙️" },
+                    { word: "High Bridge", emoji: "🌉" },
+                    { word: "Volcano Crater", emoji: "🌋" },
+                    { word: "Detective Office", emoji: "🕵️" },
+                    { word: "Royal Palace", emoji: "👑" }
                 ]
             },
             Objects: {
-                label: "Object / Item",
+                label: "Object",
                 color: "#f59e0b",
-                badgeBg: "bg-amber-500/20 text-amber-300 border-amber-500/30",
                 items: [
-                    { word: "Broken Compass", emoji: "🧭", hint: "Points toward something strange" },
-                    { word: "Golden Key", emoji: "🗝️", hint: "Opens a door nobody remembers" },
-                    { word: "Locked Suitcase", emoji: "🧳", hint: "Swapped by mistake at the airport" },
-                    { word: "Flying Carpet", emoji: "🧶", hint: "Only works when you sing to it" },
-                    { word: "Vintage Camera", emoji: "📷", hint: "Takes photos of the future" },
-                    { word: "Message in a Bottle", emoji: "🍾", hint: "Washed up on the shore" },
-                    { word: "Diamond Necklace", emoji: "📿", hint: "Worth a million dollars" },
-                    { word: "Magic Paintbrush", emoji: "🖌️", hint: "Everything painted becomes real" },
-                    { word: "Walkie-Talkie", emoji: "📻", hint: "Receiving a mysterious signal" },
-                    { word: "Silver Telescope", emoji: "🔭", hint: "Used to spot distant secrets" },
-                    { word: "Treasure Map", emoji: "🗺️", hint: "Drawn on a piece of old leather" },
-                    { word: "Invisibility Cloak", emoji: "🧥", hint: "Makes the wearer disappear" },
-                    { word: "Pocket Watch", emoji: "⏱️", hint: "Can freeze time for 60 seconds" },
-                    { word: "Electric Guitar", emoji: "🎸", hint: "Signed by a famous rockstar" },
-                    { word: "Crystal Ball", emoji: "🔮", hint: "Glowing with purple smoke" },
-                    { word: "Red Parachute", emoji: "🪂", hint: "Found tangled in a tree" },
-                    { word: "Dusty Diary", emoji: "📔", hint: "Written 100 years ago" },
-                    { word: "Flashlight", emoji: "🔦", hint: "With batteries about to die" },
-                    { word: "Hot Air Balloon", emoji: "🎈", hint: "Drifting wherever the wind blows" },
-                    { word: "Pair of Binoculars", emoji: "🥽", hint: "Forgotten on a park bench" },
-                    { word: "Wooden Violin", emoji: "🎻", hint: "Plays music by itself at night" },
-                    { word: "Robot Vacuum", emoji: "🤖", hint: "Escaped from the house" },
-                    { word: "Surfboard", emoji: "🏄", hint: "With a bite mark on the corner" },
-                    { word: "Paper Airplane", emoji: "✈️", hint: "With a secret phone number inside" },
-                    { word: "Fire Extinguisher", emoji: "🧯", hint: "Needed at the worst possible moment" },
-                    { word: "Magnifying Glass", emoji: "🔍", hint: "Reveals invisible footprints" },
-                    { word: "Skateboard", emoji: "🛹", hint: "Rolling fast down a steep hill" },
-                    { word: "Wedding Ring", emoji: "💍", hint: "Dropped down a street drain" },
-                    { word: "Umbrella", emoji: "☂️", hint: "Turned inside out by a storm" },
-                    { word: "Drone", emoji: "🚁", hint: "Delivering an unexpected package" }
+                    { word: "Broken Compass", emoji: "🧭" },
+                    { word: "Golden Key", emoji: "🗝️" },
+                    { word: "Locked Suitcase", emoji: "🧳" },
+                    { word: "Flying Carpet", emoji: "🧶" },
+                    { word: "Vintage Camera", emoji: "📷" },
+                    { word: "Bottle Message", emoji: "🍾" },
+                    { word: "Diamond Necklace", emoji: "📿" },
+                    { word: "Magic Paintbrush", emoji: "🖌️" },
+                    { word: "Walkie-Talkie", emoji: "📻" },
+                    { word: "Silver Telescope", emoji: "🔭" },
+                    { word: "Treasure Map", emoji: "🗺️" },
+                    { word: "Invisible Cloak", emoji: "🧥" },
+                    { word: "Pocket Watch", emoji: "⏱️" },
+                    { word: "Electric Guitar", emoji: "🎸" },
+                    { word: "Crystal Ball", emoji: "🔮" },
+                    { word: "Red Parachute", emoji: "🪂" },
+                    { word: "Dusty Diary", emoji: "📔" },
+                    { word: "Flashlight", emoji: "🔦" },
+                    { word: "Hot Air Balloon", emoji: "🎈" },
+                    { word: "Binoculars", emoji: "🥽" },
+                    { word: "Wooden Violin", emoji: "🎻" },
+                    { word: "Robot Vacuum", emoji: "🤖" },
+                    { word: "Surfboard", emoji: "🏄" },
+                    { word: "Paper Airplane", emoji: "✈️" },
+                    { word: "Extinguisher", emoji: "🧯" },
+                    { word: "Magnifying Glass", emoji: "🔍" },
+                    { word: "Skateboard", emoji: "🛹" },
+                    { word: "Wedding Ring", emoji: "💍" },
+                    { word: "Storm Umbrella", emoji: "☂️" },
+                    { word: "Delivery Drone", emoji: "🚁" }
                 ]
             },
             Foods: {
-                label: "Food / Drink",
+                label: "Food",
                 color: "#ec4899",
-                badgeBg: "bg-pink-500/20 text-pink-300 border-pink-500/30",
                 items: [
-                    { word: "Spicy Taco", emoji: "🌮", hint: "Made with the hottest chili in the world" },
-                    { word: "Melting Ice Cream", emoji: "🍦", hint: "Dripping fast on a hot summer day" },
-                    { word: "Giant Birthday Cake", emoji: "🎂", hint: "Someone hid a surprise inside it" },
-                    { word: "Burnt Pizza", emoji: "🍕", hint: "Forgot it in the oven for two hours" },
-                    { word: "Sushi Platter", emoji: "🍣", hint: "Prepared by a master chef" },
-                    { word: "Stack of Pancakes", emoji: "🥞", hint: "Covered in maple syrup and berries" },
-                    { word: "Glowing Smoothie", emoji: "🥤", hint: "Gives you super energy" },
-                    { word: "Box of Chocolates", emoji: "🍫", hint: "Every piece has a strange flavor" },
-                    { word: "Fresh Croissant", emoji: "🥐", hint: "Stolen right from a French bakery" },
-                    { word: "Bowl of Ramen", emoji: "🍜", hint: "Steaming hot on a rainy evening" },
-                    { word: "Sour Lemon", emoji: "🍋", hint: "Makes anyone make a funny face" },
-                    { word: "Golden Pineapple", emoji: "🍍", hint: "Presented as a royal trophy" },
-                    { word: "Popcorn Bucket", emoji: "🍿", hint: "Spilled all over the floor" },
-                    { word: "Roasted Marshmallow", emoji: "🍡", hint: "Cooked over a campfire" },
-                    { word: "Cup of Espresso", emoji: "☕", hint: "Kept the detective awake all night" },
-                    { word: "Cheese Fondue", emoji: "🧀", hint: "Bubbling in a hot pot" },
-                    { word: "Fortune Cookie", emoji: "🥠", hint: "Contains a shockingly accurate prediction" },
-                    { word: "Watermelon Slice", emoji: "🍉", hint: "At a noisy family picnic" },
-                    { word: "Garlic Bread", emoji: "🥖", hint: "Smells delicious from blocks away" },
-                    { word: "Blueberry Pie", emoji: "🥧", hint: "Cooling on a windowsill" },
-                    { word: "Crunchy Pretzel", emoji: "🥨", hint: "Bought from a street vendor" },
-                    { word: "Coconut Drink", emoji: "🥥", hint: "Served with a tiny paper umbrella" },
-                    { word: "Basket of Apples", emoji: "🍎", hint: "Picked from a forbidden orchard" },
-                    { word: "Cinnamon Roll", emoji: "🥮", hint: "Fresh and warm from the bakery" },
-                    { word: "Jar of Honey", emoji: "🍯", hint: "Guarded by angry bees" },
-                    { word: "Lobster Dinner", emoji: "🦞", hint: "At a very fancy restaurant" },
-                    { word: "Avocado Toast", emoji: "🥑", hint: "Cost twenty dollars at a café" },
-                    { word: "Cotton Candy", emoji: "🍭", hint: "Sticky and pink at the carnival" },
-                    { word: "Mystery Soup", emoji: "🍲", hint: "Nobody knows the secret ingredient" },
-                    { word: "Gingerbread Cookie", emoji: "🍪", hint: "Decorated like a famous person" }
+                    { word: "Spicy Taco", emoji: "🌮" },
+                    { word: "Melting Ice Cream", emoji: "🍦" },
+                    { word: "Birthday Cake", emoji: "🎂" },
+                    { word: "Burnt Pizza", emoji: "🍕" },
+                    { word: "Sushi Platter", emoji: "🍣" },
+                    { word: "Pancake Stack", emoji: "🥞" },
+                    { word: "Glow Smoothie", emoji: "🥤" },
+                    { word: "Chocolate Box", emoji: "🍫" },
+                    { word: "Fresh Croissant", emoji: "🥐" },
+                    { word: "Hot Ramen", emoji: "🍜" },
+                    { word: "Sour Lemon", emoji: "🍋" },
+                    { word: "Gold Pineapple", emoji: "🍍" },
+                    { word: "Popcorn Bucket", emoji: "🍿" },
+                    { word: "Marshmallow", emoji: "🍡" },
+                    { word: "Espresso Cup", emoji: "☕" },
+                    { word: "Cheese Fondue", emoji: "🧀" },
+                    { word: "Fortune Cookie", emoji: "🥠" },
+                    { word: "Watermelon", emoji: "🍉" },
+                    { word: "Garlic Bread", emoji: "🥖" },
+                    { word: "Blueberry Pie", emoji: "🥧" },
+                    { word: "Crunchy Pretzel", emoji: "🥨" },
+                    { word: "Coconut Drink", emoji: "🥥" },
+                    { word: "Apple Basket", emoji: "🍎" },
+                    { word: "Cinnamon Roll", emoji: "🥮" },
+                    { word: "Honey Jar", emoji: "🍯" },
+                    { word: "Lobster Dinner", emoji: "🦞" },
+                    { word: "Avocado Toast", emoji: "🥑" },
+                    { word: "Cotton Candy", emoji: "🍭" },
+                    { word: "Mystery Soup", emoji: "🍲" },
+                    { word: "Gingerbread", emoji: "🍪" }
                 ]
             },
             Actions: {
-                label: "Action / Event",
+                label: "Action",
                 color: "#10b981",
-                badgeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
                 items: [
-                    { word: "Missing Flight", emoji: "🏃", hint: "Arriving at the gate 1 minute late" },
-                    { word: "Winning Lottery", emoji: "🎟️", hint: "And losing the ticket immediately" },
-                    { word: "Getting Lost", emoji: "🧭", hint: "With 1% battery left on the phone" },
-                    { word: "Solving Mystery", emoji: "🕵️", hint: "Finding the final clue" },
-                    { word: "Cooking Disaster", emoji: "🔥", hint: "Setting off the smoke alarm" },
-                    { word: "Learning Surf", emoji: "🌊", hint: "When a huge wave appears" },
-                    { word: "Forgetting Passport", emoji: "🛂", hint: "Realizing it in the taxi" },
-                    { word: "Hiding from Storm", emoji: "⛈️", hint: "Thunder shaking the windows" },
-                    { word: "Making Speech", emoji: "🎤", hint: "In front of 500 nervous people" },
-                    { word: "Rescuing Stray Pet", emoji: "🐾", hint: "On the way home from work" },
-                    { word: "Breaking Record", emoji: "🏆", hint: "Completely by accident" },
-                    { word: "Locking Keys Inside", emoji: "🔐", hint: "While it starts pouring rain" },
-                    { word: "Finding Secret Door", emoji: "🚪", hint: "Behind an old bookshelf" },
-                    { word: "Failing Driving Test", emoji: "🚗", hint: "In the most hilarious way" },
-                    { word: "Meeting Celebrity", emoji: "🌟", hint: "Stuck in an elevator together" },
-                    { word: "Camping in Rain", emoji: "🌧️", hint: "When the tent starts leaking" },
-                    { word: "Chasing Runaway Hat", emoji: "🎩", hint: "Blown away by a strong wind" },
-                    { word: "Swapping Suitcases", emoji: "💼", hint: "Taking home a stranger's bag" },
-                    { word: "Running Marathon", emoji: "👟", hint: "Wearing the wrong shoes" },
-                    { word: "Planting a Tree", emoji: "🌱", hint: "And digging up an old box" },
-                    { word: "Painting Masterpiece", emoji: "🎨", hint: "With your eyes closed" },
-                    { word: "Falling Asleep", emoji: "😴", hint: "Waking up in another country" },
-                    { word: "Dancing in Rain", emoji: "💃", hint: "While everyone else runs inside" },
-                    { word: "Building Raft", emoji: "🪵", hint: "To cross a fast river" },
-                    { word: "Taking Wrong Turn", emoji: "🚧", hint: "On a dark country road" },
-                    { word: "Winning Dance Contest", emoji: "🪩", hint: "With a very unusual partner" },
-                    { word: "Losing Your Voice", emoji: "🤐", hint: "Right before an important interview" },
-                    { word: "Catching Thief", emoji: "🚨", hint: "Using an everyday object" },
-                    { word: "Traveling in Time", emoji: "⏳", hint: "Just for one afternoon" },
-                    { word: "Surprise Party", emoji: "🎉", hint: "In the wrong apartment" }
+                    { word: "Missing Flight", emoji: "🏃" },
+                    { word: "Winning Lottery", emoji: "🎟️" },
+                    { word: "Getting Lost", emoji: "🧭" },
+                    { word: "Solving Mystery", emoji: "🕵️" },
+                    { word: "Cooking Fire", emoji: "🔥" },
+                    { word: "Learning Surf", emoji: "🌊" },
+                    { word: "Lost Passport", emoji: "🛂" },
+                    { word: "Hiding in Storm", emoji: "⛈️" },
+                    { word: "Public Speech", emoji: "🎤" },
+                    { word: "Rescuing Pet", emoji: "🐾" },
+                    { word: "Breaking Record", emoji: "🏆" },
+                    { word: "Locked Outside", emoji: "🔐" },
+                    { word: "Secret Door", emoji: "🚪" },
+                    { word: "Driving Test", emoji: "🚗" },
+                    { word: "Meet Celebrity", emoji: "🌟" },
+                    { word: "Rainy Camping", emoji: "🌧️" },
+                    { word: "Chasing Hat", emoji: "🎩" },
+                    { word: "Wrong Suitcase", emoji: "💼" },
+                    { word: "Marathon Run", emoji: "👟" },
+                    { word: "Planting Tree", emoji: "🌱" },
+                    { word: "Blind Painting", emoji: "🎨" },
+                    { word: "Falling Asleep", emoji: "😴" },
+                    { word: "Dancing in Rain", emoji: "💃" },
+                    { word: "Building Raft", emoji: "🪵" },
+                    { word: "Wrong Turn", emoji: "🚧" },
+                    { word: "Dance Contest", emoji: "🪩" },
+                    { word: "Losing Voice", emoji: "🤐" },
+                    { word: "Catching Thief", emoji: "🚨" },
+                    { word: "Time Travel", emoji: "⏳" },
+                    { word: "Surprise Party", emoji: "🎉" }
                 ]
             }
         };
 
-        const B1_CHALLENGES = [
-            "Tell a story using the <strong>Past Simple</strong> and at least one feeling word (happy, scared, surprised).",
-            "Use <strong>and, but, because</strong> to connect your three prompts.",
-            "Say what happened first, next, and finally. Use <strong>first, then, finally</strong>.",
-            "Include one sentence with <strong>was/were + verb-ing</strong> (for example: 'It was raining').",
-            "Start with <strong>'One day, ...'</strong> and explain how the problem ended.",
-            "Make a short dialogue. Use <strong>'What happened?'</strong> and <strong>'Let's ...'</strong>."
-        ];
-
-        let displayMode = 'image'; // 'image', 'text', 'both'
+        // ============================================================================
+        // ESTADO DE ALTA PERFORMANCE (ZERO GARBAGE COLLECTION NO LOOP)
+        // ============================================================================
         let isSpinning = false;
         let isMuted = false;
+        let isMusicPlaying = true;
+        let bgmStarted = false;
+        let isPageVisible = true;
         let lockedReels = [false, false, false];
         let currentResults = [null, null, null];
 
-        let timerSeconds = 60;
-        let timerInterval = null;
-
         let scene, camera, renderer;
         let machineGroup, leverPivotGroup, spinButtonMesh;
+        let holdBtnCapMeshes = [];
+        let reelLockBadgeMeshes = [];
         let reelMeshes = [];
-        let slotGlowLights = [];
-        let jackpotGlowUntil = 0;
+        let reelCanvases = [];
+        let reelContexts = [];
+        let reelTextures = [];
         let reelStripItems = [[], [], []];
-        let bulbMaterials = [];
+
+        // Lâmpadas agrupadas em apenas 2 materiais compartilhados (reduz 35 updates por frame para 2)
+        let bulbMatEven, bulbMatOdd;
+
+        // Pool fixo de confetes (evita criar/destruir meshes durante o jogo)
+        const MAX_CONFETTI = 45;
+        let confettiPool = [];
+        let activeConfettiCount = 0;
+
+        // Controle de câmera e física dos rolos baseada em DeltaTime (60fps cravados)
+        let isDragging = false;
+        let prevMouse = { x: 0, y: 0 };
+        let targetRot = { x: 0.04, y: 0 };
+        let lastFrameTime = performance.now();
+        let lastTickTime = 0;
+
         let reelSpinState = [
             { spinning: false, velocity: 0, targetAngle: 0, stopTime: 0 },
             { spinning: false, velocity: 0, targetAngle: 0, stopTime: 0 },
             { spinning: false, velocity: 0, targetAngle: 0, stopTime: 0 }
         ];
         let leverAnimState = { active: false, phase: 0 };
-        let confettiParticles = [];
 
-        let isDragging = false;
-        let prevMouse = { x: 0, y: 0 };
-        let targetRot = { x: 0.04, y: 0 };
+        // Cache de imagens de Emojis em memória para evitar requisições repetidas
+        const emojiImageCache = new Map();
 
-        let polySynth, tickSynth;
+        // Pausar totalmente o consumo de GPU/CPU e música quando você troca de aba no navegador!
+        document.addEventListener('visibilitychange', () => {
+            isPageVisible = !document.hidden;
+            if (isPageVisible) {
+                lastFrameTime = performance.now();
+                syncBackgroundMusic();
+            } else if (bgmLoop) {
+                try { Tone.Transport.pause(); } catch (e) {}
+            }
+        });
+
+        // ============================================================================
+        // ÁUDIO E MÚSICA IDLE/LOOP DE FUNDO OTIMIZADOS
+        // ============================================================================
+        let polySynth, tickSynth, bgmSynth, bgmBass, bgmLoop;
+        let bgmStep = 0;
+
+        const BGM_CHORDS = [
+            ["C4", "E4", "G4", "B4"],
+            ["A3", "C4", "E4", "G4"],
+            ["F3", "A3", "C4", "E4"],
+            ["G3", "B3", "D4", "F4"]
+        ];
+        const BGM_BASS_NOTES = ["C2", "G2", "A2", "E2", "F2", "C2", "G2", "D2"];
+        const BGM_MELODY = ["E5", null, "G5", "A5", "G5", null, "E5", "C5", "D5", null, "F5", "E5", "D5", null, "B4", "G4"];
 
         function initAudio() {
-            if (polySynth) return;
+            if (polySynth) {
+                if (Tone.context.state !== 'running') {
+                    Tone.context.resume();
+                }
+                syncBackgroundMusic();
+                return;
+            }
             try {
+                if (Tone.context.state !== 'running') {
+                    Tone.context.resume();
+                }
                 polySynth = new Tone.PolySynth(Tone.Synth, {
+                    maxPolyphony: 6,
                     oscillator: { type: "triangle" },
-                    envelope: { attack: 0.01, decay: 0.15, sustain: 0.1, release: 0.4 }
+                    envelope: { attack: 0.01, decay: 0.12, sustain: 0.08, release: 0.25 }
                 }).toDestination();
-                polySynth.volume.value = -8;
+                polySynth.volume.value = -9;
 
                 tickSynth = new Tone.MembraneSynth({
-                    pitchDecay: 0.01,
-                    octaves: 3,
-                    envelope: { attack: 0.001, decay: 0.04, sustain: 0 }
+                    pitchDecay: 0.008,
+                    octaves: 2,
+                    envelope: { attack: 0.001, decay: 0.03, sustain: 0 }
                 }).toDestination();
-                tickSynth.volume.value = -12;
-            } catch (e) {
-                console.warn("Audio init skipped:", e);
+                tickSynth.volume.value = -14;
+
+                // Sintetizadores super leves para a Música Idle/Lounge de Cassino
+                bgmSynth = new Tone.PolySynth(Tone.Synth, {
+                    maxPolyphony: 4,
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.04, decay: 0.3, sustain: 0.2, release: 0.6 }
+                }).toDestination();
+                bgmSynth.volume.value = -20;
+
+                bgmBass = new Tone.Synth({
+                    oscillator: { type: "triangle" },
+                    envelope: { attack: 0.02, decay: 0.2, sustain: 0.15, release: 0.3 }
+                }).toDestination();
+                bgmBass.volume.value = -17;
+
+                Tone.Transport.bpm.value = 108;
+                bgmLoop = new Tone.Loop((time) => {
+                    if (isMuted || !isMusicPlaying || !isPageVisible) return;
+
+                    // Acorde suave no início de cada compasso
+                    if (bgmStep % 4 === 0) {
+                        const chord = BGM_CHORDS[Math.floor(bgmStep / 4) % BGM_CHORDS.length];
+                        bgmSynth.triggerAttackRelease(chord, "2n", time);
+                    }
+                    // Walking bass leve a cada 2 passos
+                    if (bgmStep % 2 === 0) {
+                        const bassNote = BGM_BASS_NOTES[Math.floor(bgmStep / 2) % BGM_BASS_NOTES.length];
+                        bgmBass.triggerAttackRelease(bassNote, "8n", time);
+                    }
+                    // Melodia alegre e discreta
+                    const melNote = BGM_MELODY[bgmStep % BGM_MELODY.length];
+                    if (melNote) {
+                        bgmSynth.triggerAttackRelease(melNote, "16n", time);
+                    }
+                    bgmStep = (bgmStep + 1) % 16;
+                }, "8n").start(0);
+
+                bgmStarted = true;
+                syncBackgroundMusic();
+            } catch (e) {}
+        }
+
+        function syncBackgroundMusic() {
+            if (!bgmStarted) return;
+            try {
+                if (!isMuted && isMusicPlaying && isPageVisible) {
+                    if (Tone.Transport.state !== 'started') {
+                        Tone.Transport.start();
+                    }
+                } else {
+                    if (Tone.Transport.state === 'started') {
+                        Tone.Transport.pause();
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function toggleMusic() {
+            initAudio();
+            isMusicPlaying = !isMusicPlaying;
+            const btn = document.getElementById('music-btn');
+            const label = document.getElementById('music-label');
+            if (isMusicPlaying) {
+                btn.className = "text-xs font-semibold text-yellow-300 hover:text-yellow-200 transition px-2 py-0.5 rounded bg-slate-800/90 border border-yellow-500/30 flex items-center gap-1";
+                if (label) label.textContent = "Music ON";
+            } else {
+                btn.className = "text-xs font-semibold text-slate-400 hover:text-slate-200 transition px-2 py-0.5 rounded bg-slate-900 border border-slate-700 flex items-center gap-1";
+                if (label) label.textContent = "Music OFF";
             }
+            syncBackgroundMusic();
         }
 
         function playTickSound(freq = 220) {
-            if (isMuted) return;
+            if (isMuted || !isPageVisible) return;
+            const now = performance.now();
+            // Evita sobrecarga de áudio limitando a no máximo 15 cliques sonoros por segundo
+            if (now - lastTickTime < 65) return;
+            lastTickTime = now;
             try {
                 initAudio();
                 tickSynth.triggerAttackRelease(freq, "32n");
@@ -536,7 +492,7 @@
         }
 
         function playReelStopSound(reelIndex) {
-            if (isMuted) return;
+            if (isMuted || !isPageVisible) return;
             try {
                 initAudio();
                 const notes = ["C4", "E4", "G4"];
@@ -545,329 +501,228 @@
         }
 
         function playJackpotFanfare() {
-            if (isMuted) return;
+            if (isMuted || !isPageVisible) return;
             try {
                 initAudio();
                 const now = Tone.now();
                 polySynth.triggerAttackRelease(["C4", "E4", "G4"], "8n", now);
-                polySynth.triggerAttackRelease(["D4", "F#4", "A4"], "8n", now + 0.14);
-                polySynth.triggerAttackRelease(["E4", "G#4", "B4"], "8n", now + 0.28);
-                polySynth.triggerAttackRelease(["C5", "E5", "G5"], "4n", now + 0.42);
+                polySynth.triggerAttackRelease(["E4", "G4", "C5"], "4n", now + 0.14);
             } catch (e) {}
         }
 
-        function createHeaderMarqueeTexture() {
+        // ============================================================================
+        // TEXTURAS REUTILIZÁVEIS (COM LETREIRO EM ARCO ENCAIXADO NA MÁQUINA)
+        // ============================================================================
+        function createFittedArchMarqueeTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 1024;
             canvas.height = 512;
             const ctx = canvas.getContext('2d');
 
-            const grad = ctx.createLinearGradient(0, 0, 0, 512);
-            grad.addColorStop(0, '#0f256e');
-            grad.addColorStop(0.5, '#1d4ed8');
-            grad.addColorStop(1, '#0f172a');
+            ctx.clearRect(0, 0, 1024, 512);
+
+            const cx = 512;
+            const cy = 492;
+            const radius = 456;
+
+            // Desenha meio-círculo perfeito que encaixa na cúpula superior da máquina
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, Math.PI, 0, false);
+            ctx.closePath();
+            ctx.clip();
+
+            // Fundo gradiente estilo cassino clássico
+            const grad = ctx.createRadialGradient(cx, cy - 120, 40, cx, cy, radius);
+            grad.addColorStop(0, '#1e40af');
+            grad.addColorStop(0.55, '#172554');
+            grad.addColorStop(1, '#090d16');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, 1024, 512);
 
-            const rad = ctx.createRadialGradient(512, 260, 20, 512, 260, 420);
-            rad.addColorStop(0, 'rgba(250, 204, 21, 0.28)');
-            rad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            ctx.fillStyle = rad;
-            ctx.fillRect(0, 0, 1024, 512);
-
-            function drawStar(cx, cy, spikes, outerR, innerR) {
-                let rot = Math.PI / 2 * 3;
-                let x = cx;
-                let y = cy;
-                let step = Math.PI / spikes;
+            // Raios de luz suaves saindo do centro do arco
+            ctx.strokeStyle = 'rgba(250, 204, 21, 0.12)';
+            ctx.lineWidth = 18;
+            for (let a = Math.PI; a <= Math.PI * 2; a += Math.PI / 10) {
                 ctx.beginPath();
-                ctx.moveTo(cx, cy - outerR);
-                for (let i = 0; i < spikes; i++) {
-                    x = cx + Math.cos(rot) * outerR;
-                    y = cy + Math.sin(rot) * outerR;
-                    ctx.lineTo(x, y);
-                    rot += step;
-                    x = cx + Math.cos(rot) * innerR;
-                    y = cy + Math.sin(rot) * innerR;
-                    ctx.lineTo(x, y);
-                    rot += step;
-                }
-                ctx.lineTo(cx, cy - outerR);
-                ctx.closePath();
-                ctx.fillStyle = '#facc15';
-                ctx.fill();
-                ctx.lineWidth = 5;
-                ctx.strokeStyle = '#ea580c';
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius);
                 ctx.stroke();
             }
 
-            drawStar(512, 130, 5, 34, 15);
-            drawStar(165, 330, 5, 30, 13);
-            drawStar(859, 330, 5, 30, 13);
+            // Borda dourada acompanhando a curvatura exata da máquina
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius - 10, Math.PI, 0, false);
+            ctx.closePath();
+            ctx.lineWidth = 18;
+            ctx.strokeStyle = '#facc15';
+            ctx.stroke();
 
-            ctx.font = '900 125px "Fredoka", sans-serif';
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius - 26, Math.PI + 0.06, -0.06, false);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#fde047';
+            ctx.stroke();
+
+            // Estrelas decorativas laterais
+            ctx.font = 'bold 48px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#facc15';
+            ctx.fillText('★', 210, 355);
+            ctx.fillText('★', 814, 355);
+            ctx.fillText('✦', 512, 115);
 
-            ctx.fillStyle = '#7c2d12';
-            for (let offset = 10; offset > 0; offset--) {
-                ctx.fillText('BIG WIN', 512, 275 + offset);
-            }
+            // Título "STORY" bem destacado no arco
+            ctx.font = '900 112px "Fredoka", sans-serif';
+            ctx.fillStyle = '#78350f';
+            ctx.fillText('STORY', cx, 248);
 
-            const textGrad = ctx.createLinearGradient(0, 200, 0, 340);
-            textGrad.addColorStop(0, '#fef08a');
-            textGrad.addColorStop(0.5, '#facc15');
-            textGrad.addColorStop(1, '#ea580c');
-            ctx.fillStyle = textGrad;
-            ctx.fillText('BIG WIN', 512, 275);
+            const goldGrad = ctx.createLinearGradient(0, 175, 0, 295);
+            goldGrad.addColorStop(0, '#fef08a');
+            goldGrad.addColorStop(0.5, '#facc15');
+            goldGrad.addColorStop(1, '#ea580c');
+            ctx.fillStyle = goldGrad;
+            ctx.fillText('STORY', cx, 240);
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#fffbeb';
+            ctx.strokeText('STORY', cx, 240);
 
-            ctx.lineWidth = 6;
-            ctx.strokeStyle = '#b45309';
-            ctx.strokeText('BIG WIN', 512, 275);
+            // Subtítulo "CASINO" encaixado na base larga do arco (Sem menção a 60FPS)
+            ctx.font = '900 94px "Fredoka", sans-serif';
+            ctx.fillStyle = '#78350f';
+            ctx.fillText('CASINO', cx, 368);
 
-            ctx.font = 'bold 34px "Inter", sans-serif';
-            ctx.fillStyle = '#fde047';
-            ctx.fillText('★ ESL STORY MAKER ★', 512, 395);
+            const casinoGrad = ctx.createLinearGradient(0, 310, 0, 415);
+            casinoGrad.addColorStop(0, '#ffffff');
+            casinoGrad.addColorStop(0.5, '#fde047');
+            casinoGrad.addColorStop(1, '#f59e0b');
+            ctx.fillStyle = casinoGrad;
+            ctx.fillText('CASINO', cx, 360);
+
+            ctx.restore();
 
             const tex = new THREE.CanvasTexture(canvas);
             tex.needsUpdate = true;
             return tex;
         }
 
-        function createReelStripTexture(itemsList) {
-            // Emoji-only reel texture: actual PNG artwork is drawn onto the texture,
-            // so the symbols rotate with the cylinder and are not affected by scene lights.
-            const slotCount = itemsList.length;
-            const slotW = 512;
-            const slotH = 512;
-            const canvas = document.createElement('canvas');
-            canvas.width = slotW * slotCount;
-            canvas.height = slotH;
-            const ctx = canvas.getContext('2d');
+        function drawReelSlot(ctx, tex, item, slotIndex, slotW, slotH) {
+            const x0 = slotIndex * slotW;
 
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.colorSpace = THREE.SRGBColorSpace;
-            texture.anisotropy = renderer ? renderer.capabilities.getMaxAnisotropy() : 1;
-            texture.needsUpdate = true;
+            // Pintura base imediata
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x0, 0, slotW, slotH);
+            ctx.fillStyle = '#eff6ff';
+            ctx.fillRect(x0 + 10, 10, slotW - 20, slotH - 20);
+            ctx.strokeStyle = item.categoryColor || '#1d4ed8';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(x0 + 14, 14, slotW - 28, slotH - 28);
 
-            // Paint all cards with a flat, high-contrast background first.
-            for (let i = 0; i < slotCount; i++) {
-                const x0 = i * slotW;
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(x0, 0, slotW, slotH);
-                ctx.fillStyle = '#dbeafe';
-                ctx.fillRect(x0 + 14, 14, slotW - 28, slotH - 28);
-                ctx.strokeStyle = '#1d4ed8';
-                ctx.lineWidth = 12;
-                ctx.strokeRect(x0 + 20, 20, slotW - 40, slotH - 40);
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(x0 + 38, 38, slotW - 76, slotH - 76);
+            const emoji = String(item.emoji || '⭐');
+
+            // Desenha emoji nativo imediatamente (zero atraso)
+            const renderNativeFallback = () => {
+                ctx.save();
+                ctx.translate(x0 + slotW / 2, slotH / 2);
+                ctx.rotate(Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = '140px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+                ctx.fillStyle = '#0f172a';
+                ctx.fillText(emoji, 0, 0);
+                ctx.restore();
+                tex.needsUpdate = true;
+            };
+
+            // Se já estiver no cache, usa a imagem vetorial imediatamente
+            if (emojiImageCache.has(emoji)) {
+                const cachedImg = emojiImageCache.get(emoji);
+                if (cachedImg.complete && cachedImg.naturalWidth > 0) {
+                    ctx.save();
+                    ctx.translate(x0 + slotW / 2, slotH / 2);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.drawImage(cachedImg, -95, -72, 190, 144);
+                    ctx.restore();
+                    tex.needsUpdate = true;
+                    return;
+                }
             }
 
-            // Twemoji PNGs are crisp and consistent across operating systems.
-            // If a CDN image cannot load, use the browser emoji as a fallback.
-            itemsList.forEach((item, i) => {
-                const x0 = i * slotW;
-                const emoji = String(item.emoji || '⭐');
+            renderNativeFallback();
+
+            // Carrega Twemoji em background apenas 1 vez por emoji e salva no cache
+            if (!emojiImageCache.has(emoji)) {
                 const codepoints = Array.from(emoji)
                     .map(ch => ch.codePointAt(0).toString(16))
                     .filter(cp => cp !== 'fe0f')
                     .join('-');
-                const url = `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/${codepoints}.png`;
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
+                emojiImageCache.set(emoji, img);
                 img.onload = () => {
-                    // Keep the icon large and centered; no text or decorative labels.
-                    // Safe margins prevent fins, wings, tails and other emoji details
-                    // from being clipped by the curved reel window.
-                    const drawW = 380;
-                    const drawH = 285;
-                    ctx.clearRect(x0 + 18, 18, slotW - 36, slotH - 36);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(x0 + 18, 18, slotW - 36, slotH - 36);
-
-                    // Compensate for the reel UV orientation, while widening the symbol
-                    // so it does not look unnaturally tall in the visible window.
-                    ctx.save();
-                    ctx.translate(x0 + slotW / 2, slotH / 2);
-                    ctx.rotate(Math.PI / 2);
-                    ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
-                    ctx.restore();
-                    texture.needsUpdate = true;
-                };
-                img.onerror = () => {
-                    ctx.fillStyle = '#ffffff';
+                    ctx.fillStyle = '#eff6ff';
                     ctx.fillRect(x0 + 18, 18, slotW - 36, slotH - 36);
                     ctx.save();
                     ctx.translate(x0 + slotW / 2, slotH / 2);
                     ctx.rotate(Math.PI / 2);
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.font = '285px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-                    ctx.fillText(emoji, 0, 0, 380);
+                    ctx.drawImage(img, -95, -72, 190, 144);
                     ctx.restore();
-                    texture.needsUpdate = true;
+                    tex.needsUpdate = true;
                 };
-                img.src = url;
-            });
-
-            return texture;
+                img.src = `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/${codepoints}.png`;
+            }
         }
 
-        function pickRandomPoolForReel(count = 12) {
+        // Atualiza o canvas existente do rolo sem alocar nova memória na placa de vídeo
+        function updateReelTextureInPlace(reelIndex, itemsList) {
+            const slotW = 256;
+            const slotH = 256;
+            const ctx = reelContexts[reelIndex];
+            const tex = reelTextures[reelIndex];
+            if (!ctx || !tex) return;
+
+            for (let i = 0; i < itemsList.length; i++) {
+                drawReelSlot(ctx, tex, itemsList[i], i, slotW, slotH);
+            }
+            tex.needsUpdate = true;
+        }
+
+        function pickRandomPoolForReel(count = 4) {
             const categories = Object.keys(WORD_BANK);
             const result = [];
-            const usedWords = new Set();
+            const usedEmojis = new Set();
 
             while (result.length < count) {
                 const catKey = categories[Math.floor(Math.random() * categories.length)];
                 const catObj = WORD_BANK[catKey];
                 const randomItem = catObj.items[Math.floor(Math.random() * catObj.items.length)];
-                if (!usedWords.has(randomItem.word)) {
-                    usedWords.add(randomItem.word);
+                if (!usedEmojis.has(randomItem.emoji)) {
+                    usedEmojis.add(randomItem.emoji);
                     result.push({
                         ...randomItem,
                         categoryKey: catKey,
                         categoryName: catObj.label,
-                        categoryColor: catObj.color,
-                        badgeBg: catObj.badgeBg
+                        categoryColor: catObj.color
                     });
                 }
             }
             return result;
         }
 
-
-        // Readable flat display panels sit in front of the rotating reels.
-        // The cylinders keep their 3D animation, while these panels show legible prompts.
-        let reelDisplayMeshes = [];
-        let marqueeDisplayMesh = null;
-
-        function makeMarqueeDisplayTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1024;
-            canvas.height = 320;
-            const ctx = canvas.getContext('2d');
-            const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            bg.addColorStop(0, '#1d4ed8');
-            bg.addColorStop(1, '#172554');
-            ctx.fillStyle = bg;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#facc15';
-            ctx.lineWidth = 12;
-            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
-
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.font = 'bold 88px sans-serif';
-            ctx.fillStyle = '#fde047';
-            ctx.fillText('STORY CASINO', canvas.width / 2, 160);
-
-            return new THREE.CanvasTexture(canvas);
+        function updateHUDCards() {
+            for (let r = 0; r < 3; r++) {
+                const item = currentResults[r];
+                if (!item) continue;
+                document.getElementById(`card-emoji-${r}`).textContent = item.emoji;
+                const cardEl = document.getElementById(`card-${r}`);
+                cardEl.style.borderBottomColor = item.categoryColor;
+            }
         }
 
-        function makeReadableReelTexture(item) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 768;
-            canvas.height = 768;
-            const ctx = canvas.getContext('2d');
-            const color = item.categoryColor || '#2563eb';
-
-            // Bold, uncluttered card with a clear contrast.
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = color;
-            ctx.fillRect(0, 0, canvas.width, 92);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.font = 'bold 34px Arial, sans-serif';
-            ctx.fillText('STORY PROMPT', canvas.width / 2, 46);
-
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(16, 108, 736, 644);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 14;
-            ctx.strokeRect(20, 112, 728, 636);
-
-            // Large emoji is the main visual cue.
-            ctx.font = '260px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-            ctx.fillStyle = '#111827';
-            ctx.fillText(item.emoji || '⭐', canvas.width / 2, 345);
-
-            // Keep the label short and large enough to read from a classroom screen.
-            const label = String(item.word || 'Tell a story');
-            const words = label.split(/\s+/);
-            let lines = [];
-            let line = '';
-            ctx.font = 'bold 66px Arial, sans-serif';
-            for (const word of words) {
-                const candidate = line ? line + ' ' + word : word;
-                if (ctx.measureText(candidate).width > 670 && line) {
-                    lines.push(line);
-                    line = word;
-                } else {
-                    line = candidate;
-                }
-            }
-            if (line) lines.push(line);
-            if (lines.length > 2) {
-                lines = [lines[0], lines.slice(1).join(' ')];
-                while (ctx.measureText(lines[1]).width > 670 && lines[1].length > 4) {
-                    lines[1] = lines[1].slice(0, -2) + '…';
-                }
-            }
-            ctx.fillStyle = '#0f172a';
-            ctx.font = 'bold 66px Arial, sans-serif';
-            const lineHeight = 76;
-            const labelStartY = lines.length === 1 ? 590 : 555;
-            lines.slice(0, 2).forEach((text, i) => {
-                let size = 66;
-                ctx.font = `bold ${size}px Arial, sans-serif`;
-                while (ctx.measureText(text).width > 670 && size > 42) {
-                    size -= 2;
-                    ctx.font = `bold ${size}px Arial, sans-serif`;
-                }
-                ctx.fillText(text, canvas.width / 2, labelStartY + i * lineHeight, 670);
-            });
-            return new THREE.CanvasTexture(canvas);
-        }
-
-        function wrapCanvasText(ctx, text, centerX, startY, maxWidth, lineHeight, maxLines) {
-            const words = String(text).split(/\s+/);
-            const lines = [];
-            let line = '';
-            for (const word of words) {
-                const test = line ? `${line} ${word}` : word;
-                if (ctx.measureText(test).width > maxWidth && line) {
-                    lines.push(line);
-                    line = word;
-                } else {
-                    line = test;
-                }
-            }
-            if (line) lines.push(line);
-            const visible = lines.slice(0, maxLines || lines.length);
-            if (lines.length > visible.length && visible.length) {
-                let last = visible[visible.length - 1];
-                while (last.length && ctx.measureText(`${last}…`).width > maxWidth) last = last.slice(0, -1);
-                visible[visible.length - 1] = `${last}…`;
-            }
-            const totalHeight = visible.length * lineHeight;
-            visible.forEach((lineText, i) => ctx.fillText(lineText, centerX, startY - totalHeight / 2 + lineHeight / 2 + i * lineHeight, maxWidth));
-        }
-
-        function updateReelDisplay(index, item) {
-            const mesh = reelDisplayMeshes[index];
-            if (!mesh || !item) return;
-            const oldTexture = mesh.material.map;
-            const texture = makeReadableReelTexture(item);
-            mesh.material.map = texture;
-            mesh.material.needsUpdate = true;
-            if (oldTexture) oldTexture.dispose();
-        }
-
+        // ============================================================================
+        // INICIALIZAÇÃO 3D OTIMIZADA
+        // ============================================================================
         function initThreeJS() {
             const container = document.getElementById('canvas-container');
             const w = container.clientWidth;
@@ -875,71 +730,66 @@
 
             scene = new THREE.Scene();
 
-            camera = new THREE.PerspectiveCamera(36, w / h, 0.1, 100);
-            camera.position.set(0, 0.4, 14.5);
-            camera.lookAt(0, 0.2, 0);
+            camera = new THREE.PerspectiveCamera(36, w / h, 0.5, 40);
+            camera.position.set(0, 0.25, 14.8);
+            camera.lookAt(0, 0.1, 0);
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            // Desabilitado shadowMap e alpha desnecessário para dobrar a taxa de preenchimento de pixels
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                alpha: true,
+                powerPreference: "high-performance"
+            });
             renderer.setSize(w, h);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.shadowMap.enabled = true;
+            // Limita o pixelRatio em 1.5 para evitar renderizar em 4K/5K em telas Retina, mantendo 60fps
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+            renderer.shadowMap.enabled = false;
             container.appendChild(renderer.domElement);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+            // Iluminação simplificada e eficiente (Apenas 2 luzes em vez de 7 PointLights pesados)
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.05);
             scene.add(ambientLight);
 
-            const keyLight = new THREE.DirectionalLight(0xfffbeb, 1.25);
-            keyLight.position.set(6, 10, 12);
+            const keyLight = new THREE.DirectionalLight(0xfffbeb, 1.15);
+            keyLight.position.set(5, 9, 10);
             scene.add(keyLight);
 
-            const rimLightLeft = new THREE.PointLight(0xfacc15, 1.3, 20);
-            rimLightLeft.position.set(-7, 3, 5);
-            scene.add(rimLightLeft);
-
-            const rimLightRight = new THREE.PointLight(0xec4899, 1.1, 20);
-            rimLightRight.position.set(7, -2, 5);
-            scene.add(rimLightRight);
-
             machineGroup = new THREE.Group();
-            machineGroup.position.y = -0.15;
+            machineGroup.position.y = -0.35;
             scene.add(machineGroup);
 
-            const redGlossyMat = new THREE.MeshStandardMaterial({ color: 0xd91b1b, roughness: 0.22, metalness: 0.15 });
-            const darkRedMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.35, metalness: 0.2 });
-            const goldMetallicMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.22, metalness: 0.78 });
-            const royalBlueMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.3, metalness: 0.25 });
-            const sapphireKnobMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.12, metalness: 0.4 });
+            // Materiais compartilhados
+            const redGlossyMat = new THREE.MeshLambertMaterial({ color: 0xd91b1b });
+            const darkRedMat = new THREE.MeshLambertMaterial({ color: 0x991b1b });
+            const goldMetallicMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3, metalness: 0.65 });
+            const royalBlueMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
+            const sapphireKnobMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.2, metalness: 0.3 });
 
             const cabinetWidth = 6.5;
             const cabinetHeight = 4.3;
             const cabinetDepth = 2.8;
 
+            // Gabinete Principal
             const mainBoxMesh = new THREE.Mesh(new THREE.BoxGeometry(cabinetWidth, cabinetHeight, cabinetDepth), redGlossyMat);
             mainBoxMesh.position.set(0, -0.45, 0);
             machineGroup.add(mainBoxMesh);
 
+            // Topo Arredondado (Geometria otimizada de 48 para 24 segmentos)
             const archRadius = cabinetWidth / 2;
-            const archGeo = new THREE.CylinderGeometry(archRadius, archRadius, cabinetDepth, 48, 1, false, 0, Math.PI);
+            const archGeo = new THREE.CylinderGeometry(archRadius, archRadius, cabinetDepth, 24, 1, false, 0, Math.PI);
             archGeo.rotateZ(Math.PI / 2);
             archGeo.rotateY(Math.PI / 2);
             const archMesh = new THREE.Mesh(archGeo, redGlossyMat);
             archMesh.position.set(0, 1.7, 0);
             machineGroup.add(archMesh);
 
-            const innerArchRadius = archRadius - 0.55;
-            const marqueeGeo = new THREE.CylinderGeometry(innerArchRadius, innerArchRadius, 0.2, 48, 1, false, 0, Math.PI);
-            marqueeGeo.rotateZ(Math.PI / 2);
-            marqueeGeo.rotateY(Math.PI / 2);
-            const marqueeTex = createHeaderMarqueeTexture();
-            const marqueeMesh = new THREE.Mesh(marqueeGeo, new THREE.MeshStandardMaterial({ map: marqueeTex, roughness: 0.25 }));
-            marqueeMesh.position.set(0, 1.72, cabinetDepth / 2 - 0.04);
-            machineGroup.add(marqueeMesh);
-            // Flat, front-facing title panel avoids the curved marquee UV distortion.
+            // Painel do Título em formato de Semicírculo Encaixado Perfeitamente no Topo da Máquina
             const marqueeDisplayMaterial = new THREE.MeshBasicMaterial({
-                map: makeMarqueeDisplayTexture(), transparent: false, toneMapped: false
+                map: createFittedArchMarqueeTexture(),
+                transparent: true
             });
-            marqueeDisplayMesh = new THREE.Mesh(new THREE.PlaneGeometry(4.45, 1.32), marqueeDisplayMaterial);
-            marqueeDisplayMesh.position.set(0, 2.48, cabinetDepth / 2 + 0.10);
+            const marqueeDisplayMesh = new THREE.Mesh(new THREE.PlaneGeometry(5.55, 2.75), marqueeDisplayMaterial);
+            marqueeDisplayMesh.position.set(0, 3.02, cabinetDepth / 2 + 0.03);
             machineGroup.add(marqueeDisplayMesh);
 
             const dividerBar = new THREE.Mesh(new THREE.BoxGeometry(cabinetWidth + 0.08, 0.42, 0.35), redGlossyMat);
@@ -950,6 +800,7 @@
             blueBackdrop.position.set(0, -0.15, cabinetDepth / 2 - 0.05);
             machineGroup.add(blueBackdrop);
 
+            // Moldura Dourada dos Rolos
             const frameOuterW = 4.65;
             const frameOuterH = 2.35;
             const barThick = 0.16;
@@ -962,95 +813,115 @@
             botGoldBar.position.set(0, -0.15 - frameOuterH / 2, cabinetDepth / 2 + 0.04);
             machineGroup.add(botGoldBar);
 
+            const vBarGeo = new THREE.BoxGeometry(barThick, frameOuterH + barThick, 0.34);
             [-2.24, -0.75, 0.75, 2.24].forEach(xPos => {
-                const vBar = new THREE.Mesh(new THREE.BoxGeometry(barThick, frameOuterH + barThick, 0.34), goldMetallicMat);
+                const vBar = new THREE.Mesh(vBarGeo, goldMetallicMat);
                 vBar.position.set(xPos, -0.15, cabinetDepth / 2 + 0.04);
                 machineGroup.add(vBar);
             });
 
-            // 3 Rotating Cylindrical Reels displaying items directly on the 3D model
+            // 3 Rolos Cilíndricos com Texturas Pré-alocadas (Sem recriação no Spin)
             const reelRadius = 1.05;
             const reelWidth = 1.28;
             const reelXPositions = [-1.5, 0, 1.5];
+            const cylGeo = new THREE.CylinderGeometry(reelRadius, reelRadius, reelWidth, 32, 1, false);
+            cylGeo.rotateZ(Math.PI / 2);
+            const capMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
 
             for (let r = 0; r < 3; r++) {
-                reelStripItems[r] = pickRandomPoolForReel(2);
-                const stripTex = createReelStripTexture(reelStripItems[r]);
+                const canvas = document.createElement('canvas');
+                canvas.width = 256 * 4; // 4 slots por rolo
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+                const tex = new THREE.CanvasTexture(canvas);
 
-                const cylGeo = new THREE.CylinderGeometry(reelRadius, reelRadius, reelWidth, 48, 1, false);
-                cylGeo.rotateZ(Math.PI / 2);
+                reelCanvases.push(canvas);
+                reelContexts.push(ctx);
+                reelTextures.push(tex);
 
-                const sideMat = new THREE.MeshBasicMaterial({ map: stripTex, toneMapped: false });
-                const capMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+                reelStripItems[r] = pickRandomPoolForReel(4);
+                updateReelTextureInPlace(r, reelStripItems[r]);
 
+                const sideMat = new THREE.MeshBasicMaterial({ map: tex });
                 const reelMesh = new THREE.Mesh(cylGeo, [sideMat, capMat, capMat]);
                 reelMesh.position.set(reelXPositions[r], -0.15, cabinetDepth / 2 - 0.68);
-                reelMesh.rotation.x = 0;
+                // Alinha o slot 0 exatamente para frente
+                reelMesh.rotation.x = Math.PI / 4;
 
                 machineGroup.add(reelMesh);
                 reelMeshes.push(reelMesh);
-                const slotGlow = new THREE.PointLight(0xffd54a, 0, 2.8, 2);
-                slotGlow.position.set(reelXPositions[r], -0.15, cabinetDepth / 2 + 0.02);
-                machineGroup.add(slotGlow);
-                slotGlowLights.push(slotGlow);
                 currentResults[r] = reelStripItems[r][0];
-                // Emoji symbols are part of the rotating cylinder texture.
+
+                // Indicador 3D de Rolo Travado (Borda luminosa dourada ao redor do rolo quando em HOLD)
+                const lockRingGeo = new THREE.BoxGeometry(1.38, 2.15, 0.08);
+                const lockRingMat = new THREE.MeshBasicMaterial({ color: 0xfacc15, wireframe: false, transparent: true, opacity: 0.0 });
+                const lockRingMesh = new THREE.Mesh(lockRingGeo, lockRingMat);
+                lockRingMesh.position.set(reelXPositions[r], -0.15, cabinetDepth / 2 + 0.16);
+                machineGroup.add(lockRingMesh);
+                reelLockBadgeMeshes.push(lockRingMesh);
             }
 
-            // Casino Perimeter Lights
+            updateHUDCards();
+
+            // Lâmpadas Perimetrais Otimizadas (Apenas 2 materiais compartilhados para todas as lâmpadas!)
             const bulbPositions = [];
-            for (let y = -1.6; y <= 1.35; y += 0.58) {
-                bulbPositions.push([-2.92, y, cabinetDepth / 2 + 0.08]);
-            }
+            for (let y = -1.6; y <= 1.35; y += 0.58) bulbPositions.push([-2.92, y, cabinetDepth / 2 + 0.08]);
             for (let i = 0; i <= 11; i++) {
                 const angle = Math.PI - (i / 11) * Math.PI;
                 const rBulb = archRadius - 0.28;
                 bulbPositions.push([Math.cos(angle) * rBulb, 1.7 + Math.sin(angle) * rBulb, cabinetDepth / 2 + 0.08]);
             }
-            for (let y = 1.35; y >= -1.6; y -= 0.58) {
-                bulbPositions.push([2.92, y, cabinetDepth / 2 + 0.08]);
-            }
-            for (let x = -2.35; x <= 2.35; x += 0.67) {
-                bulbPositions.push([x, 1.7, cabinetDepth / 2 + 0.14]);
-            }
+            for (let y = 1.35; y >= -1.6; y -= 0.58) bulbPositions.push([2.92, y, cabinetDepth / 2 + 0.08]);
+            for (let x = -2.35; x <= 2.35; x += 0.67) bulbPositions.push([x, 1.7, cabinetDepth / 2 + 0.14]);
 
-            const bulbGeo = new THREE.SphereGeometry(0.14, 16, 16);
-            bulbPositions.forEach(pos => {
-                const mat = new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xf59e0b, emissiveIntensity: 0.9, roughness: 0.15 });
-                const bulb = new THREE.Mesh(bulbGeo, mat);
+            const bulbGeo = new THREE.SphereGeometry(0.13, 8, 8);
+            bulbMatEven = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            bulbMatOdd = new THREE.MeshBasicMaterial({ color: 0xd97706 });
+
+            bulbPositions.forEach((pos, idx) => {
+                const bulb = new THREE.Mesh(bulbGeo, idx % 2 === 0 ? bulbMatEven : bulbMatOdd);
                 bulb.position.set(pos[0], pos[1], pos[2]);
                 machineGroup.add(bulb);
-                bulbMaterials.push(mat);
             });
 
+            // Base e Botões 3D
             const deckMesh = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.42, 4.1), redGlossyMat);
             deckMesh.position.set(0, -2.55, 0.55);
             machineGroup.add(deckMesh);
 
+            const footGeo = new THREE.BoxGeometry(0.45, 0.25, 0.6);
             [-2.5, 2.5].forEach(fx => {
-                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.25, 0.6), darkRedMat);
+                const foot = new THREE.Mesh(footGeo, darkRedMat);
                 foot.position.set(fx, -2.85, 0.8);
                 machineGroup.add(foot);
             });
 
-            [-2.15, -1.25, -0.35].forEach(bx => {
-                const base = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.4, 0.12, 24), royalBlueMat);
+            const btnBaseGeo = new THREE.CylinderGeometry(0.36, 0.4, 0.12, 16);
+            const btnCapGeo = new THREE.CylinderGeometry(0.31, 0.33, 0.18, 16);
+            [-2.15, -1.25, -0.35].forEach((bx, idx) => {
+                const base = new THREE.Mesh(btnBaseGeo, royalBlueMat);
                 base.position.set(bx, -2.32, 1.75);
                 machineGroup.add(base);
-                const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.33, 0.18, 24), goldMetallicMat);
+
+                // Cada botão 3D de Hold tem seu próprio material leve para acender quando travado
+                const capMat3D = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3, metalness: 0.65 });
+                const cap = new THREE.Mesh(btnCapGeo, capMat3D);
                 cap.position.set(bx, -2.20, 1.75);
+                cap.userData = { holdReelIndex: idx };
                 machineGroup.add(cap);
+                holdBtnCapMeshes.push(cap);
             });
 
-            const bigBase = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.68, 0.15, 32), royalBlueMat);
+            const bigBase = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.68, 0.15, 20), royalBlueMat);
             bigBase.position.set(1.75, -2.30, 1.75);
             machineGroup.add(bigBase);
 
-            spinButtonMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.54, 0.56, 0.26, 32), goldMetallicMat);
+            spinButtonMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.54, 0.56, 0.26, 20), goldMetallicMat);
             spinButtonMesh.position.set(1.75, -2.14, 1.75);
             machineGroup.add(spinButtonMesh);
 
-            const mountMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.55, 32).rotateZ(Math.PI / 2), goldMetallicMat);
+            // Alavanca Lateral
+            const mountMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.55, 20).rotateZ(Math.PI / 2), goldMetallicMat);
             mountMesh.position.set(cabinetWidth / 2 + 0.24, -0.45, 0);
             machineGroup.add(mountMesh);
 
@@ -1058,17 +929,49 @@
             leverPivotGroup.position.set(cabinetWidth / 2 + 0.35, -0.45, 0);
             machineGroup.add(leverPivotGroup);
 
-            const shaftMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 2.2, 20), goldMetallicMat);
+            const shaftMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 2.2, 12), goldMetallicMat);
             shaftMesh.position.set(0.15, 1.0, 0);
             shaftMesh.rotation.z = -0.15;
             leverPivotGroup.add(shaftMesh);
 
-            const knobMesh = new THREE.Mesh(new THREE.SphereGeometry(0.32, 28, 28), sapphireKnobMat);
+            const knobMesh = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), sapphireKnobMat);
             knobMesh.position.set(0.32, 2.08, 0);
             leverPivotGroup.add(knobMesh);
 
+            // Inicializa o Pool de Confetes (Reutilizado sempre, zero alocação durante o jogo)
+            initConfettiPool();
+
             setupCanvasInteractions(container);
-            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('resize', onWindowResize, { passive: true });
+        }
+
+        function initConfettiPool() {
+            const colors = [0xfacc15, 0xef4444, 0x3b82f6, 0x10b981, 0xec4899, 0xa855f7];
+            const sharedGeo = new THREE.PlaneGeometry(0.18, 0.18);
+            const sharedMats = colors.map(c => new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }));
+
+            for (let i = 0; i < MAX_CONFETTI; i++) {
+                const p = new THREE.Mesh(sharedGeo, sharedMats[i % sharedMats.length]);
+                p.visible = false;
+                p.userData = { vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, life: 0 };
+                scene.add(p);
+                confettiPool.push(p);
+            }
+        }
+
+        function spawn3DConfetti() {
+            activeConfettiCount = MAX_CONFETTI;
+            for (let i = 0; i < MAX_CONFETTI; i++) {
+                const p = confettiPool[i];
+                p.position.set((Math.random() - 0.5) * 5.2, 1.1 + Math.random() * 1.4, 1.8 + Math.random() * 1.1);
+                p.userData.vx = (Math.random() - 0.5) * 0.12;
+                p.userData.vy = 0.08 + Math.random() * 0.12;
+                p.userData.vz = (Math.random() - 0.5) * 0.08;
+                p.userData.rx = (Math.random() - 0.5) * 0.22;
+                p.userData.ry = (Math.random() - 0.5) * 0.22;
+                p.userData.life = 75;
+                p.visible = true;
+            }
         }
 
         function onWindowResize() {
@@ -1082,16 +985,22 @@
         }
 
         function setupCanvasInteractions(container) {
-            const raycaster = new THREE.Raycaster();
-            const mouse = new THREE.Vector2();
             let downTime = 0;
+            let startPos = { x: 0, y: 0 };
+            const raycaster = new THREE.Raycaster();
+            const pointer = new THREE.Vector2();
 
             container.addEventListener('pointerdown', (e) => {
+                // Ignora cliques em botões HTML da interface para nunca disparar giro acidental!
+                if (e.target !== renderer.domElement) return;
+                initAudio();
                 isDragging = true;
                 downTime = performance.now();
                 prevMouse.x = e.clientX;
                 prevMouse.y = e.clientY;
-            });
+                startPos.x = e.clientX;
+                startPos.y = e.clientY;
+            }, { passive: true });
 
             window.addEventListener('pointermove', (e) => {
                 if (!isDragging) return;
@@ -1102,24 +1011,37 @@
 
                 targetRot.y = Math.max(-0.55, Math.min(0.55, targetRot.y + dx * 0.005));
                 targetRot.x = Math.max(-0.22, Math.min(0.32, targetRot.x + dy * 0.004));
-            });
+            }, { passive: true });
 
             window.addEventListener('pointerup', (e) => {
                 if (!isDragging) return;
                 isDragging = false;
-                const elapsed = performance.now() - downTime;
+                if (e.target !== renderer.domElement) return;
 
-                if (elapsed < 220) {
+                const elapsed = performance.now() - downTime;
+                const moveDist = Math.hypot(e.clientX - startPos.x, e.clientY - startPos.y);
+
+                // Se foi um clique rápido no canvas 3D
+                if (elapsed < 250 && moveDist < 10) {
                     const rect = renderer.domElement.getBoundingClientRect();
-                    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-                    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-                    raycaster.setFromCamera(mouse, camera);
-                    const intersects = raycaster.intersectObjects(machineGroup.children, true);
-                    if (intersects.length > 0) {
-                        triggerSpin();
+                    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                    raycaster.setFromCamera(pointer, camera);
+
+                    // Verifica se o usuário clicou em um dos 3 botões físicos de HOLD na máquina 3D
+                    const holdHits = raycaster.intersectObjects(holdBtnCapMeshes, false);
+                    if (holdHits.length > 0) {
+                        const reelIdx = holdHits[0].object.userData.holdReelIndex;
+                        if (reelIdx !== undefined) {
+                            toggleLockReel(reelIdx);
+                            return;
+                        }
                     }
+
+                    // Caso contrário, gira os rolos destravados
+                    triggerSpin();
                 }
-            });
+            }, { passive: true });
         }
 
         function resetCameraAngle() {
@@ -1127,20 +1049,32 @@
             targetRot.y = 0;
         }
 
+        // ============================================================================
+        // LÓGICA DE GIRO E TRAVAMENTO CORRIGIDA DOS ROLOS (HOLD REELS)
+        // ============================================================================
         function triggerSpin(onlyReelIndex = null) {
-            if (isSpinning) return;
+            if (isSpinning || reelContexts.length < 3) return;
+            initAudio();
 
+            // Se todos os 3 rolos estiverem travados, não destrava à força: faz um efeito sonoro de aviso nos botões de trava
             if (onlyReelIndex === null && lockedReels[0] && lockedReels[1] && lockedReels[2]) {
-                toggleLockReel(0);
-                toggleLockReel(1);
-                toggleLockReel(2);
+                playTickSound(150);
+                for (let i = 0; i < 3; i++) {
+                    const btn = document.getElementById(`lock-${i}`);
+                    btn.classList.add('scale-110');
+                    setTimeout(() => btn.classList.remove('scale-110'), 200);
+                }
+                return;
             }
 
             isSpinning = true;
             const spinBtn = document.getElementById('spin-btn');
             const spinText = document.getElementById('spin-btn-text');
+            const promptHud = document.getElementById('prompt-hud');
+
             spinBtn.classList.add('spinning');
             spinText.textContent = "SPINNING...";
+            promptHud.style.opacity = '0.45';
 
             leverAnimState.active = true;
             leverAnimState.phase = 0;
@@ -1150,73 +1084,94 @@
             }
 
             const now = performance.now();
+            let spinOrder = 0;
 
             for (let r = 0; r < 3; r++) {
                 if (onlyReelIndex !== null && onlyReelIndex !== r) continue;
-                if (onlyReelIndex === null && lockedReels[r]) continue;
+                // Se o rolo estiver travado (HOLD), preserva exatamente sua textura, ângulo e emoji!
+                if (onlyReelIndex === null && lockedReels[r]) {
+                    reelSpinState[r].spinning = false;
+                    continue;
+                }
 
-                reelStripItems[r] = pickRandomPoolForReel(2);
-                const newTex = createReelStripTexture(reelStripItems[r]);
-                reelMeshes[r].material[0].map.dispose();
-                reelMeshes[r].material[0].map = newTex;
-                reelMeshes[r].material[0].needsUpdate = true;
-
+                reelStripItems[r] = pickRandomPoolForReel(4);
+                updateReelTextureInPlace(r, reelStripItems[r]);
                 currentResults[r] = reelStripItems[r][0];
 
-                const fullRotations = 4 + r * 2;
+                const fullRotations = 4 + spinOrder * 2;
                 const currentRot = reelMeshes[r].rotation.x;
                 const nextMultiple = Math.ceil(currentRot / (Math.PI * 2)) * (Math.PI * 2);
 
                 reelSpinState[r].spinning = true;
-                reelSpinState[r].velocity = 0.34 + r * 0.03;
-                reelSpinState[r].targetAngle = nextMultiple + fullRotations * Math.PI * 2 + Math.PI / 2;
-                reelSpinState[r].stopTime = now + 1150 + r * 550;
+                reelSpinState[r].velocity = 0.36 + spinOrder * 0.03;
+                // Para exatamente no primeiro item (slot 0) alinhado para o jogador
+                reelSpinState[r].targetAngle = nextMultiple + fullRotations * Math.PI * 2 + Math.PI / 4;
+                reelSpinState[r].stopTime = now + 950 + spinOrder * 450;
+                spinOrder++;
             }
         }
 
-        function spinSingleReel(reelIdx) {
-            if (isSpinning) return;
-            if (lockedReels[reelIdx]) {
-                toggleLockReel(reelIdx);
+        function toggleLockReel(index) {
+            if (isSpinning) return; // Evita alterar travas no meio do giro
+            initAudio();
+            playTickSound(lockedReels[index] ? 260 : 420);
+
+            lockedReels[index] = !lockedReels[index];
+            const isLocked = lockedReels[index];
+
+            // Atualiza botão inferior de Hold
+            const btn = document.getElementById(`lock-${index}`);
+            const icon = document.getElementById(`lock-icon-${index}`);
+            const badge = document.getElementById(`card-lock-badge-${index}`);
+
+            if (isLocked) {
+                icon.textContent = "🔒";
+                btn.className = "px-3 py-1 rounded-full bg-amber-400 text-slate-950 border border-amber-200 text-xs font-extrabold flex items-center gap-1.5 transition shadow-md";
+                if (badge) badge.classList.remove('hidden');
+            } else {
+                icon.textContent = "🔓";
+                btn.className = "px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold flex items-center gap-1.5 transition";
+                if (badge) badge.classList.add('hidden');
             }
-            triggerSpin(reelIdx);
+
+            // Atualiza também o botão físico 3D na máquina (abaixa e brilha em verde/dourado quando travado)
+            if (holdBtnCapMeshes[index]) {
+                holdBtnCapMeshes[index].position.y = isLocked ? -2.26 : -2.20;
+                holdBtnCapMeshes[index].material.color.setHex(isLocked ? 0x22c55e : 0xf59e0b);
+            }
         }
 
-        function spawn3DConfetti() {
-            const colors = [0xfacc15, 0xef4444, 0x3b82f6, 0x10b981, 0xec4899, 0xa855f7];
-            const geo = new THREE.PlaneGeometry(0.18, 0.18);
-
-            for (let i = 0; i < 65; i++) {
-                const mat = new THREE.MeshBasicMaterial({ color: colors[Math.floor(Math.random() * colors.length)], side: THREE.DoubleSide });
-                const p = new THREE.Mesh(geo, mat);
-                p.position.set((Math.random() - 0.5) * 5, 1.2 + Math.random() * 1.5, 1.8 + Math.random() * 1.2);
-                p.userData = {
-                    vx: (Math.random() - 0.5) * 0.12,
-                    vy: 0.08 + Math.random() * 0.12,
-                    vz: (Math.random() - 0.5) * 0.08,
-                    rx: (Math.random() - 0.5) * 0.2,
-                    ry: (Math.random() - 0.5) * 0.2,
-                    life: 90
-                };
-                scene.add(p);
-                confettiParticles.push(p);
-            }
+        function toggleMute() {
+            initAudio();
+            isMuted = !isMuted;
+            document.getElementById('sound-btn').textContent = isMuted ? '🔇' : '🔊';
+            syncBackgroundMusic();
         }
 
-        let lastTickAngle = [0, 0, 0];
+        // ============================================================================
+        // LOOP DE ANIMAÇÃO 60FPS CRAVADOS (COM DELTA TIME E PAUSA EM SEGUNDO PLANO)
+        // ============================================================================
+        let lastBulbToggle = 0;
+        let bulbPhase = false;
 
-        function animateLoop() {
+        function animateLoop(now) {
             requestAnimationFrame(animateLoop);
 
-            const now = performance.now();
+            // Pausa completamente a renderização quando a aba está oculta para economizar CPU/GPU
+            if (!isPageVisible || !renderer) return;
 
+            const dt = Math.min((now - lastFrameTime) / 16.667, 2.5);
+            lastFrameTime = now;
+
+            // Rotação suave da câmera/máquina
             if (machineGroup) {
-                machineGroup.rotation.y += (targetRot.y - machineGroup.rotation.y) * 0.1;
-                machineGroup.rotation.x += (targetRot.x - machineGroup.rotation.x) * 0.1;
+                machineGroup.rotation.y += (targetRot.y - machineGroup.rotation.y) * 0.12 * dt;
+                machineGroup.rotation.x += (targetRot.x - machineGroup.rotation.x) * 0.12 * dt;
             }
 
+            // Animação da alavanca lateral
             if (leverAnimState.active && leverPivotGroup) {
-                leverAnimState.phase += 0.11;
+                leverAnimState.phase += 0.12 * dt;
                 if (leverAnimState.phase <= Math.PI) {
                     leverPivotGroup.rotation.x = Math.sin(leverAnimState.phase) * 1.15;
                 } else {
@@ -1226,43 +1181,40 @@
                 }
             }
 
-            const glowActive = now < jackpotGlowUntil;
-            slotGlowLights.forEach((light, idx) => {
-                const pulse = glowActive ? (1.8 + Math.max(0, Math.sin(now * 0.025 + idx * 1.4)) * 2.4) : 0;
-                light.intensity += (pulse - light.intensity) * 0.22;
-            });
-
-            const speedMultiplier = isSpinning ? 0.018 : 0.005;
-            bulbMaterials.forEach((mat, idx) => {
-                const wave = Math.sin(now * speedMultiplier - idx * 0.65);
-                if (wave > 0.15) {
-                    mat.emissiveIntensity = isSpinning ? 1.8 : 1.2;
-                    mat.color.setHex(0xffffff);
-                    mat.emissive.setHex(isSpinning ? 0xfacc15 : 0xf59e0b);
-                } else {
-                    mat.emissiveIntensity = 0.2;
-                    mat.color.setHex(0xfde047);
-                    mat.emissive.setHex(0x92400e);
+            // Pisca as lâmpadas trocando apenas 2 materiais compartilhados
+            const bulbInterval = isSpinning ? 120 : 420;
+            if (now - lastBulbToggle > bulbInterval) {
+                lastBulbToggle = now;
+                bulbPhase = !bulbPhase;
+                if (bulbMatEven && bulbMatOdd) {
+                    bulbMatEven.color.setHex(bulbPhase ? 0xffffff : 0xd97706);
+                    bulbMatOdd.color.setHex(bulbPhase ? 0xd97706 : 0xffffff);
                 }
-            });
+            }
 
+            // Atualiza destaque dourado nos rolos travados (HOLD)
+            for (let r = 0; r < 3; r++) {
+                if (reelLockBadgeMeshes[r]) {
+                    const targetOp = lockedReels[r] ? 0.32 : 0.0;
+                    reelLockBadgeMeshes[r].material.opacity += (targetOp - reelLockBadgeMeshes[r].material.opacity) * 0.15 * dt;
+                }
+            }
+
+            // Física de giro dos 3 rolos
             let anyStillSpinning = false;
             for (let r = 0; r < 3; r++) {
                 const state = reelSpinState[r];
-                if (state.spinning) {
+                if (state.spinning && reelMeshes[r]) {
                     anyStillSpinning = true;
                     const mesh = reelMeshes[r];
 
                     if (now < state.stopTime) {
-                        mesh.rotation.x += state.velocity;
-                        if (mesh.rotation.x - lastTickAngle[r] > Math.PI / 6) {
-                            lastTickAngle[r] = mesh.rotation.x;
-                            playTickSound(200 + r * 60);
-                        }
+                        mesh.rotation.x += state.velocity * dt;
+                        playTickSound(210 + r * 55);
                     } else {
                         const diff = state.targetAngle - mesh.rotation.x;
                         if (Math.abs(diff) > 0.008) {
-                            mesh.rotation.x += diff * 0.18;
+                            mesh.rotation.x += diff * 0.18 * dt;
                         } else {
                             mesh.rotation.x = state.targetAngle % (Math.PI * 2);
                             state.spinning = false;
@@ -1272,207 +1224,58 @@
                 }
             }
 
+            // Quando todos os rolos terminam de parar
             if (isSpinning && !anyStillSpinning) {
                 isSpinning = false;
                 const spinBtn = document.getElementById('spin-btn');
                 const spinText = document.getElementById('spin-btn-text');
+                const promptHud = document.getElementById('prompt-hud');
+
                 spinBtn.classList.remove('spinning');
                 spinText.textContent = "SPIN AGAIN!";
+                promptHud.style.opacity = '1';
+
+                updateHUDCards();
                 playJackpotFanfare();
-                jackpotGlowUntil = performance.now() + 1800;
                 spawn3DConfetti();
             }
 
-            for (let i = confettiParticles.length - 1; i >= 0; i--) {
-                const p = confettiParticles[i];
-                p.position.x += p.userData.vx;
-                p.position.y += p.userData.vy;
-                p.position.z += p.userData.vz;
-                p.userData.vy -= 0.0045;
-                p.rotation.x += p.userData.rx;
-                p.rotation.y += p.userData.ry;
-                p.userData.life--;
+            // Atualiza pool fixo de confetes sem alocar memória
+            if (activeConfettiCount > 0) {
+                let alive = 0;
+                for (let i = 0; i < MAX_CONFETTI; i++) {
+                    const p = confettiPool[i];
+                    if (!p.visible) continue;
+                    p.position.x += p.userData.vx * dt;
+                    p.position.y += p.userData.vy * dt;
+                    p.position.z += p.userData.vz * dt;
+                    p.userData.vy -= 0.0045 * dt;
+                    p.rotation.x += p.userData.rx * dt;
+                    p.rotation.y += p.userData.ry * dt;
+                    p.userData.life -= dt;
 
-                if (p.userData.life <= 0) {
-                    scene.remove(p);
-                    p.geometry.dispose();
-                    p.material.dispose();
-                    confettiParticles.splice(i, 1);
+                    if (p.userData.life <= 0) {
+                        p.visible = false;
+                    } else {
+                        alive++;
+                    }
                 }
+                activeConfettiCount = alive;
             }
 
             renderer.render(scene, camera);
         }
 
-        function setDisplayMode(mode) {
-            displayMode = mode;
-            ['image', 'text', 'both'].forEach(m => {
-                const btn = document.getElementById(`mode-${m}`);
-                if (m === mode) {
-                    btn.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-yellow-500 text-slate-950 shadow";
-                } else {
-                    btn.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-300 hover:text-white";
-                }
+        // Inicialização imediata e segura da cena 3D e do loop de 60FPS
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', () => {
+                initThreeJS();
+                requestAnimationFrame(animateLoop);
             });
-
-            for (let r = 0; r < 3; r++) {
-                if (reelMeshes[r] && reelStripItems[r].length > 0) {
-                    const newTex = createReelStripTexture(reelStripItems[r]);
-                    reelMeshes[r].material[0].map.dispose();
-                    reelMeshes[r].material[0].map = newTex;
-                    reelMeshes[r].material[0].needsUpdate = true;
-                }
-            }
-        }
-
-        function toggleLockReel(index) {
-            lockedReels[index] = !lockedReels[index];
-            const btn = document.getElementById(`lock-${index}`);
-            const icon = document.getElementById(`lock-icon-${index}`);
-            if (lockedReels[index]) {
-                icon.textContent = "🔒";
-                btn.className = "px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition";
-            } else {
-                icon.textContent = "🔓";
-                btn.className = "px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold flex items-center gap-1.5 transition";
-            }
-        }
-
-        function newB1Challenge() {
-            const box = document.getElementById('b1-mission-box');
-            const randomChallenge = B1_CHALLENGES[Math.floor(Math.random() * B1_CHALLENGES.length)];
-            box.innerHTML = randomChallenge;
-            playTickSound(380);
-        }
-
-        function insertConnector(text) {
-            const area = document.getElementById('story-textarea');
-            const start = area.selectionStart;
-            const end = area.selectionEnd;
-            const current = area.value;
-            area.value = current.substring(0, start) + text + current.substring(end);
-            area.focus();
-            updateWordCount();
-        }
-
-        function updateWordCount() {
-            const text = document.getElementById('story-textarea').value.trim();
-            const count = text ? text.split(/\s+/).length : 0;
-            document.getElementById('word-counter').textContent = `${count} word${count === 1 ? '' : 's'}`;
-        }
-
-        function copyStory() {
-            const area = document.getElementById('story-textarea');
-            area.select();
-            document.execCommand('copy');
-            const toast = document.getElementById('copy-toast');
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 2500);
-        }
-
-        function clearStory() {
-            document.getElementById('story-textarea').value = '';
-            updateWordCount();
-        }
-
-        function toggleMute() {
-            isMuted = !isMuted;
-            document.getElementById('sound-btn').textContent = isMuted ? '🔇' : '🔊';
-        }
-
-        function formatTime(sec) {
-            const m = String(Math.floor(sec / 60)).padStart(2, '0');
-            const s = String(sec % 60).padStart(2, '0');
-            return `${m}:${s}`;
-        }
-
-        function toggleTimer() {
-            const btn = document.getElementById('timer-btn');
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-                btn.textContent = "▶ Resume";
-                btn.className = "px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition";
-            } else {
-                btn.textContent = "⏸ Pause";
-                btn.className = "px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition";
-                timerInterval = setInterval(() => {
-                    if (timerSeconds > 0) {
-                        timerSeconds--;
-                        document.getElementById('timer-display').textContent = formatTime(timerSeconds);
-                    } else {
-                        clearInterval(timerInterval);
-                        timerInterval = null;
-                        btn.textContent = "▶ Start";
-                        playJackpotFanfare();
-                    }
-                }, 1000);
-            }
-        }
-
-        function resetTimer() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-            timerSeconds = 60;
-            document.getElementById('timer-display').textContent = formatTime(timerSeconds);
-            const btn = document.getElementById('timer-btn');
-            btn.textContent = "▶ Start";
-            btn.className = "px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition";
-        }
-
-        function populateWordBankModal() {
-            const container = document.getElementById('word-bank-content');
-            container.innerHTML = '';
-
-            Object.keys(WORD_BANK).forEach(catKey => {
-                const cat = WORD_BANK[catKey];
-                const card = document.createElement('div');
-                card.className = "bg-slate-900/90 border border-slate-700 rounded-2xl p-4 flex flex-col";
-
-                const header = document.createElement('div');
-                header.className = "flex items-center justify-between pb-2 mb-3 border-b border-slate-800";
-                header.innerHTML = `
-                    <span class="font-bold text-sm uppercase tracking-wider px-2.5 py-1 rounded border ${cat.badgeBg}">${cat.label}s</span>
-                    <span class="text-xs text-slate-400 font-semibold">${cat.items.length} words</span>
-                `;
-                card.appendChild(header);
-
-                const list = document.createElement('div');
-                list.className = "grid grid-cols-1 gap-1.5 max-h-64 overflow-y-auto pr-1";
-                cat.items.forEach((item, idx) => {
-                    const row = document.createElement('div');
-                    row.className = "flex items-center gap-2 text-xs py-1 px-2 rounded-lg bg-slate-800/60 hover:bg-slate-800";
-                    row.innerHTML = `
-                        <span class="text-base">${item.emoji}</span>
-                        <span class="font-semibold text-white">${idx + 1}. ${item.word}</span>
-                        <span class="text-slate-400 ml-auto truncate max-w-[130px]" title="${item.hint}">${item.hint}</span>
-                    `;
-                    list.appendChild(row);
-                });
-
-                card.appendChild(list);
-                container.appendChild(card);
-            });
-        }
-
-        function toggleWordBankModal() {
-            const modal = document.getElementById('word-bank-modal');
-            if (modal.classList.contains('hidden')) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            } else {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
-        }
-
-        window.onload = function () {
+        } else {
             initThreeJS();
-            populateWordBankModal();
-            animateLoop();
-        };
+            requestAnimationFrame(animateLoop);
+        }
     </script>
 </body>
 </html>
